@@ -1,0 +1,56 @@
+/* STREAMING_CHUNK: Importing Tailwind CSS modern framework... */
+@import "tailwindcss";
+
+/* STREAMING_CHUNK: Registering custom BMC theme colors for Tailwind v4... */
+@theme {
+--color-bmc-red: #CC1111;
+--color-bmc-black: #0A0A0A;
+--color-bmc-white: #F5F5F5;
+--color-bmc-gold: #D4AF37;
+}
+
+/* STREAMING_CHUNK: Customizing premium dark scrollbar... */
+::-webkit-scrollbar {
+width: 8px;
+}
+
+::-webkit-scrollbar-track {
+background: #0A0A0A;
+}
+
+::-webkit-scrollbar-thumb {
+background: #27272a;
+border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+background: #CC1111;
+}
+
+/* STREAMING_CHUNK: Styling global body and scroll behavior... */
+html {
+scroll-behavior: smooth;
+background-color: #0A0A0A;
+}
+
+body {
+background-color: #0A0A0A;
+color: #F5F5F5;
+overflow-x: hidden;
+}
+
+/* STREAMING_CHUNK: Adding smooth transition fade-in animations... */
+@keyframes fadeIn {
+from {
+opacity: 0;
+transform: translateY(10px);
+}
+to {
+opacity: 1;
+transform: translateY(0);
+}
+}
+
+.animate-fadeIn {
+animation: fadeIn 0.5s ease-out forwards;
+}
