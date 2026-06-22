@@ -325,29 +325,29 @@ const TEAMS: TeamItem[] = [
     fullName: 'Liputan, Editing, Narasi, Sosial Media, Arsip', 
     tagline: 'Menangkap cerita, menyebarkan inspirasi', 
     identity: 'Wajah visual dan narator kisah perjalanan BMC.',
-    responsibilities: ['Mengambil dokumentasi foto dan video berkualitas premium', 'Mengelola aset publikasi di seluruh platform sosial media', 'Menusik narasi reflektif yang menginspirasi khalayak luas']
+    responsibilities: ['Mengambil dokumentasi foto dan video berkualitas premium', 'Mengelola aset publikasi di seluruh platform sosial media', 'Menulis narasi reflektif yang menginspirasi khalayak luas']
   },
 ];
 
 const TESTIMONIALS: Testimonial[] = [
   {
     quote: 'Di BMC saya menemukan apa yang tidak saya dapatkan di bangku kuliah: sebuah ruang aman untuk berbicara jujur tentang kecemasan saya, didengarkan tanpa dihakimi, dan diajak bersama-sama merintis aksi sosial nyata.',
-    author: 'Ronaldo',
-    role: 'Anggota BMC sejak 2026',
+    author: 'Rionaldo',
+    role: 'Mahasiswa & Anggota BMC sejak 2024',
     initials: 'R',
     color: 'red',
   },
   {
     quote: 'Awalnya saya ragu berdialog lintas iman karena takut menyinggung sensitivitas teologis. Namun di program TENUN, semua dibicarakan dengan keterbukaan luar biasa, kehangatan, dan rasa hormat yang sangat tulus.',
-    author: 'Jovanni',
-    role: 'Anggota BMC sejak 2026',
+    author: 'Siti Sarah',
+    role: 'Pegiat Komunitas & Alumnus TFT',
     initials: 'SS',
     color: 'gold',
   },
   {
     quote: 'BMC mengajarkan saya bahwa berkarya bukan soal panggung ketenaran individu, melainkan bagaimana benang potensi saya yang rapuh bisa dirajut bersama teman-teman menjadi jaring pengaman sosial.',
-    author: 'Gaby',
-    role: 'Koordinator RACIK',
+    author: 'Gaby Lombone',
+    role: 'Kreator Konten & Koordinator RACIK',
     initials: 'GL',
     color: 'red',
   }
@@ -356,7 +356,7 @@ const TESTIMONIALS: Testimonial[] = [
 const FAQS: FAQItem[] = [
   {
     q: 'Apakah Benang Merah Community terikat dengan organisasi keagamaan atau politik tertentu?',
-    a: 'Sama sekali tidak. BMC adalah komunitas independen, inklusif, dan non-partisan. Kami berfokus sepenuhnya pada dialog kemanusiaan, pertumbuhan karakter anak muda, serta kolaborasi sosial lintas iman dan latar belakang budaya.'
+    a: 'Sama sekali tidak. BMC adalah komunitas independen, inklusif, dan non-partisan. Kami berfokus sepenuhnya pada dialog kemানুsyaan, pertumbuhan karakter anak muda, serta kolaborasi sosial lintas iman dan latar belakang budaya.'
   },
   {
     q: 'Siapa saja yang boleh bergabung ke dalam komunitas ini?',
@@ -695,8 +695,8 @@ export default function App() {
             const isActive = currentPage === page;
             const isHovered = hoveredNav === page;
             
-            let label = page;
-            if (page === 'saran') label = 'saran & kritik';
+            // Perbaikan TypeScript: Definisikan label sebagai string agar bisa menerima 'saran & kritik'
+            const label: string = page === 'saran' ? 'saran & kritik' : page;
 
             if (page === 'daftar') {
               return (
@@ -1183,7 +1183,7 @@ function HomeView({ navigateTo, goToSlide, activeSlide, mounted, fadeUp }: HomeV
               <span style={{ color: '#CC1111' }}>Persaudaraan Lintas Batas</span>
             </h2>
             <p style={{ ...fadeUp(introVisible, 160), fontSize: '14px', color: '#A1A1AA', lineHeight: 1.85, marginBottom: '20px' }}>
-              Benang Merah Community lahir dari sebuah kepedulian tulus di Manado: bahwa di tengah dunia yang terpolarisasi, persaudaraan sejati bukan didapat dengan menghapus perbedaan, melainkan dengan "Merajutnya".
+              Benang Merah Community lahir dari sebuah kepedulian tulus di Manado: bahwa di tengah dunia yang terpolarisasi, persaudaraan sejati bukan didapat dengan menghapus perbedaan, melainkan dengan <strong style={{ fontWeight: 700, color: '#E8E6E0' }}>merajutnya</strong>.
             </p>
             <p style={{ ...fadeUp(introVisible, 240), fontSize: '14px', color: '#71717A', lineHeight: 1.8, marginBottom: '32px' }}>
               Kami memfasilitasi ruang dialog sehat tanpa sekat dogma dan kecurigaan. Kami percaya bahwa lewat perjumpaan, kita bisa berdamai secara utuh, bertumbuh secara sadar, dan berkarya secara konsisten.
@@ -1468,10 +1468,10 @@ function TentangView({ navigateTo, fadeUp }: TentangViewProps) {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mt-10">
           <div style={{ fontSize: '14px', color: '#A1A1AA', lineHeight: 1.85 }}>
             <p style={{ marginBottom: '20px' }}>
-              Benang Merah lahir dari kesadaran pahit bahwa banyak permasalahan sosial berawal dari relasi yang rusak. Hubungan manusia yang terpecah karena dogma keras, kesalahpahaman latar belakang suku/agama, dan minimnya ruang dialog sehat bagi pemuda.
+              Benang Merah lahir dari kesadaran pahit bahwa banyak permasalahan sosial berawal dari <strong style={{ fontWeight: 700, color: '#E8E6E0' }}>relasi yang rusak</strong>. Hubungan manusia yang terpecah karena dogma keras, kesalahpahaman latar belakang suku/agama, dan minimnya ruang dialog sehat bagi pemuda.
             </p>
             <p style={{ marginBottom: '20px' }}>
-              Diinisiasi di Manado, Sulawesi Utara, kami mengadopsi metafora Tenun dan Rajut. Setiap manusia diibaratkan satu helai benang yang rapuh dan tak berbentuk jika sendirian. Namun, jika benang-benang itu dikumpulkan, dirawat, dan dirajut dalam proses yang sabar, maka akan melahirkan karya anyaman persaudaraan yang luar biasa indah.
+              Diinisiasi di Manado, Sulawesi Utara, kami mengadopsi metafora <strong style={{ fontWeight: 700, color: '#E8E6E0' }}>Tenun dan Rajut</strong>. Setiap manusia diibaratkan satu helai benang yang rapuh dan tak berbentuk jika sendirian. Namun, jika benang-benang itu dikumpulkan, dirawat, dan dirajut dalam proses yang sabar, maka akan melahirkan karya anyaman persaudaraan yang luar biasa indah.
             </p>
           </div>
           <div style={{ fontSize: '14px', color: '#71717A', lineHeight: 1.8 }}>
@@ -1493,6 +1493,9 @@ function TentangView({ navigateTo, fadeUp }: TentangViewProps) {
           <h2 style={{ fontSize: 'clamp(1.8rem, 3.5vw, 2.5rem)', fontWeight: 700, fontFamily: 'serif', marginBottom: '16px' }}>
             Simbol Rajutan Makna Resmi
           </h2>
+          <p style={{ fontSize: '14px', color: '#71717A', maxWidth: '540px', margin: '0 auto', lineHeight: 1.7 }}>
+            Logo resmi <strong style={{ fontWeight: 700, color: '#E8E6E0' }}>BMC Manado</strong> (seperti yang terlihat pada berkas <span style={{ fontStyle: 'italic' }}>LOGO 2.jpeg</span>) kini telah ditingkatkan dengan penyelarasan geometris presisi dan animasi <span style={{ fontStyle: 'italic' }}>glow tracing</span> yang mengalir menyusuri kelokan benang merah.
+          </p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
@@ -1888,12 +1891,12 @@ function DaftarView() {
         {submitted ? (
           <div style={{ textAlign: 'center', padding: '24px 0', animation: 'fadeIn 0.6s' }}>
             <span style={{ fontSize: '48px', display: 'block', marginBottom: '20px' }}>🎉</span>
-            <h3 style={{ fontSize: '22px', fontWeight: 700, fontFamily: 'serif', color: '#D4AF37', marginBottom: '12px' }}>Wellcome friend!</h3>
+            <h3 style={{ fontSize: '22px', fontWeight: 700, fontFamily: 'serif', color: '#D4AF37', marginBottom: '12px' }}>Selamat Bergabung!</h3>
             <p style={{ fontSize: '13px', color: '#71717A', lineHeight: 1.8, marginBottom: '24px' }}>
-              Data pendaftaran atas nama {formData.nama} telah kami kirimkan ke lembar arsip Tim CATAT secara aman. Fasilitator kami dari Tim PELUK akan menghubungi Anda via WhatsApp ({formData.telp}). Silahkan nantikan kegaitan perekrutan secara resmi dari BMC dan anda dapat bergabung melalui BMC Public
+              Data pendaftaran atas nama <strong style={{ fontWeight: 700, color: '#E8E6E0' }}>{formData.nama}</strong> telah kami kirimkan ke lembar arsip <strong style={{ fontWeight: 700, color: '#E8E6E0' }}>Tim CATAT</strong> secara aman. Fasilitator kami dari Tim <strong style={{ fontWeight: 700, color: '#E8E6E0' }}>PELUK</strong> akan menghubungi Anda via WhatsApp ({formData.telp}) dalam waktu 2x24 jam untuk pengenalan ruang aman perdana.
             </p>
             <div style={{ background: 'rgba(204,17,17,0.05)', border: '1px solid rgba(204,17,17,0.15)', padding: '16px', borderRadius: '12px', fontSize: '12px', color: '#A1A1AA', lineHeight: 1.6 }}>
-              Sampai bertemu di sesi TENUN! Persiapkan diri Anda untuk perjumpaan dan dialog yang hangat.
+              Sampai bertemu di sesi <strong style={{ fontWeight: 700, color: '#E8E6E0' }}>TENUN</strong> minggu depan! Persiapkan diri Anda untuk perjumpaan dan dialog yang hangat.
             </div>
           </div>
         ) : (
@@ -2179,7 +2182,7 @@ function KontakView() {
                 <span style={{ fontSize: '32px', display: 'block', marginBottom: '12px' }}>✉️</span>
                 <h4 style={{ fontSize: '18px', fontWeight: 700, color: '#D4AF37', marginBottom: '8px' }}>Pesan Terkirim!</h4>
                 <p style={{ fontSize: '12px', color: '#71717A', lineHeight: 1.6 }}>
-                  Terima kasih, **{msgData.nama}**. Kami telah mencatat pesan Anda dan tim **JALIN** akan segera membalasnya sesegera mungkin.
+                  Terima kasih, <strong style={{ fontWeight: 700, color: '#E8E6E0' }}>{msgData.nama}</strong>. Kami telah mencatat pesan Anda dan tim <strong style={{ fontWeight: 700, color: '#E8E6E0' }}>JALIN</strong> akan segera membalasnya sesegera mungkin.
                 </p>
               </div>
             ) : (
@@ -2385,11 +2388,11 @@ function SaranView() {
               Masukan Diterima dengan Hangat!
             </h3>
             <p style={{ fontSize: '13.5px', color: '#A1A1AA', lineHeight: 1.8, marginBottom: '24px', maxWidth: '550px', margin: '0 auto 24px' }}>
-              Terima kasih telah meluangkan waktu berharga Anda untuk menulis saran ini. Masukan Anda mengenai kategori **{selectedCategory}** {isAnonymous ? 'yang dikirim secara Anonim ' : ''}telah diarsip dengan aman di dalam sistem kami.
+              Terima kasih telah meluangkan waktu berharga Anda untuk menulis saran ini. Masukan Anda mengenai kategori <strong style={{ fontWeight: 700, color: '#E8E6E0' }}>{selectedCategory}</strong> {isAnonymous ? 'yang dikirim secara Anonim ' : ''}telah diarsip dengan aman di dalam sistem kami.
             </p>
             <div style={{ background: 'rgba(204,17,17,0.03)', border: '1px solid rgba(204,17,17,0.15)', padding: '20px', borderRadius: '12px', fontSize: '12.5px', color: '#71717A', lineHeight: 1.7, textAlign: 'left', marginBottom: '32px' }}>
               <strong style={{ color: '#CC1111', display: 'block', marginBottom: '6px' }}>Alur Evaluasi Internal:</strong>
-              Setiap masukan yang masuk akan disortir dan ditranskrip langsung oleh **Tim CATAT (Catatan Administrasi)** tanpa mengubah esensi aslinya. Masukan tersebut kemudian akan dibawa langsung ke meja rapat bulanan bersama Koordinator Inti dan Dewan Pembina untuk dicarikan solusi konkret serta perbaikan sistemik.
+              Setiap masukan yang masuk akan disortir dan ditranskrip langsung oleh <strong style={{ fontWeight: 700, color: '#E8E6E0' }}>Tim CATAT (Catatan Administrasi)</strong> tanpa mengubah esensi aslinya. Masukan tersebut kemudian akan dibawa langsung ke meja rapat bulanan bersama Koordinator Inti dan Dewan Pembina untuk dicarikan solusi konkret serta perbaikan sistemik.
             </div>
             <button
               onClick={() => {
