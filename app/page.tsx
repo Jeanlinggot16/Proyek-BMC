@@ -1,4 +1,3 @@
-// app/page.tsx
 'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
@@ -59,6 +58,19 @@ export default function HomePage() {
 
       {/* ─── HERO ─────────────────────────────────────────────────────────── */}
       <div className="relative min-h-[calc(100vh-70px)] flex flex-col justify-center items-center px-5 pt-24 pb-10 sm:px-6 sm:pt-28 sm:pb-12 overflow-hidden">
+        
+        {/* FOTO BACKGROUND BARU & OVERLAY HITAM (z-0) */}
+        <div className="absolute inset-0 z-0 pointer-events-none">
+          <img 
+            src="/hero-bg.jpeg" 
+            alt="Hero Background" 
+            className="w-full h-full object-cover"
+          />
+          {/* Lapisan hitam transparan dengan sedikit efek blur halus agar teks putih kontras */}
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-[1px]" />
+        </div>
+
+        {/* Canvas animasi benang tetap dipertahankan dan otomatis berada di atas foto */}
         <InteractiveWeaveCanvas />
 
         <div
@@ -67,6 +79,7 @@ export default function HomePage() {
           style={{ background: 'radial-gradient(ellipse, rgba(204,17,17,0.08) 0%, transparent 70%)', filter: 'blur(64px)' }}
         />
 
+        {/* Konten teks (z-10) berada paling atas */}
         <div className="relative z-10 max-w-4xl w-full text-center pointer-events-none">
           
           {/* BADGE BARU */}
@@ -183,18 +196,21 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* ─── STATS ────────────────────────────────────────────────────────── */}
-      <Divider />
-      <div
-        ref={statsRef}
-        className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-px"
-        style={{ background: 'rgba(255,255,255,0.04)' }}
-      >
-        {STATS.map((s, i) => (
-          <StatItem key={i} value={s.value} label={s.label} delay={i * 100} start={statsVisible} />
-        ))}
+      {/* ─── STATS (Floating Card ala Indorelawan - Versi BMC Premium) ─── */}
+      <div className="relative z-20 px-4 -mt-10 sm:-mt-14 max-w-5xl mx-auto">
+        <div 
+          ref={statsRef}
+          className="grid grid-cols-2 md:grid-cols-4 rounded-2xl border border-white/10 overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.8)]"
+          style={{ 
+            background: 'rgba(13, 13, 13, 0.95)',
+            backdropFilter: 'blur(16px)' 
+          }}
+        >
+          {STATS.map((s, i) => (
+            <StatItem key={i} value={s.value} label={s.label} delay={i * 100} start={statsVisible} />
+          ))}
+        </div>
       </div>
-      <Divider />
 
       {/* ─── INTRO / SIAPA KAMI ───────────────────────────────────────────── */}
       <section ref={introRef} className="relative z-10 px-5 py-16 sm:px-6 sm:py-20 md:py-24 max-w-[1100px] mx-auto">
