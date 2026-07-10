@@ -374,7 +374,7 @@ export default function Hero() {
             style={{
               fontFamily: 'var(--font-sans)',
               fontSize:   'clamp(0.875rem, 1.5vw, 1rem)',
-              color:      '#52525B',
+              color:      '#8A8A94',
             }}
           >
             Benang Merah Community adalah ruang tulus bagi pemuda Manado yang

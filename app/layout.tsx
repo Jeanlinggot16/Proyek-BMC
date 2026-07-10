@@ -1,11 +1,75 @@
+import type { Metadata } from 'next';
+import { Inter, Playfair_Display } from 'next/font/google';
 import './globals.css';
-import Navbar from '@/components/Navbar';
-import GlobalBackground from '@/components/global-background';
-import PageTransition from '@/components/page-transition';
 
-export const metadata = {
-  title: 'Benang Merah Community Manado',
-  description: 'Ruang aman untuk berdialog, bertumbuh, dan berkarya lintas iman di Manado.',
+import GlobalBackground from '@/components/global-background';
+import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
+import PageTransition from '@/components/page-transition';
+import ScrollThread from '@/components/ui/ScrollThread';
+
+/* ─── FONT SETUP ───────────────────────────────────────────────────────────
+   Ini yang hilang sebelumnya. Semua komponen (Hero, ProgramCard, dst) sudah
+   memakai var(--font-sans) dan var(--font-display), tapi variabelnya tidak
+   pernah didefinisikan karena RootLayout kosong. Ganti font di bawah kalau
+   Anda punya pilihan font display lain yang lebih sesuai identitas BMC —
+   Playfair Display cuma pilihan default yang wajar untuk kesan "prestige".
+------------------------------------------------------------------------- */
+const sans = Inter({
+  subsets: ['latin'],
+  variable: '--font-sans',
+  display: 'swap',
+});
+
+const display = Playfair_Display({
+  subsets: ['latin'],
+  weight: ['500', '600', '700', '800'],
+  variable: '--font-display',
+  display: 'swap',
+});
+
+export const metadata: Metadata = {
+  metadataBase: new URL('https://bmcmanado.me'),
+  title: {
+    default: 'Benang Merah Community Manado',
+    template: '%s | Benang Merah Community Manado',
+  },
+  description:
+    'Komunitas lintas iman, budaya, dan kehidupan di Sulawesi Utara yang merajut perjumpaan, penerimaan, dan kebersamaan.',
+  keywords: [
+    'komunitas manado',
+    'komunitas lintas iman',
+    'kegiatan pemuda manado',
+    'benang merah community',
+    'dialog lintas iman sulawesi utara',
+  ],
+  openGraph: {
+    type: 'website',
+    url: 'https://bmcmanado.me',
+    siteName: 'Benang Merah Community Manado',
+    title: 'Benang Merah Community Manado',
+    description:
+      'Ruang aman untuk berdamai, bertumbuh, dan berkarya bersama di Manado.',
+    images: [
+      {
+        url: '/og-cover.jpg',
+        width: 1200,
+        height: 630,
+        alt: 'Benang Merah Community Manado',
+      },
+    ],
+    locale: 'id_ID',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Benang Merah Community Manado',
+    description:
+      'Ruang aman untuk berdamai, bertumbuh, dan berkarya bersama di Manado.',
+    images: ['/og-cover.jpg'],
+  },
+  alternates: {
+    canonical: 'https://bmcmanado.me',
+  },
 };
 
 export default function RootLayout({
@@ -14,19 +78,24 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="id">
-      {/* Warna latar belakang dasar dikunci ke hitam pekat (#040404) agar transisi layar tidak pernah menampilkan warna putih */}
-      <body className="bg-[#040404] text-zinc-200 antialiased selection:bg-[#CC1111]/30 selection:text-white min-h-screen">
-        {/* Background Global (Loom + Gradient Bars) yang dikunci (Fixed) */}
+    <html lang="id" className={`${sans.variable} ${display.variable}`}>
+      <body className="relative min-h-screen antialiased">
+        {/* Latar global — gradient bars + loom grid, harus di paling belakang (z-0) */}
         <GlobalBackground />
 
-        {/* Navigasi Stabil (Fixed) */}
+        {/* Navbar fixed, ada di atas semua halaman */}
         <Navbar />
 
-        {/* Semua halaman akan di-render di dalam PageTransition ini agar memiliki efek Fade-In */}
-        <PageTransition>
-          {children}
-        </PageTransition>
+        {/* Indikator progres scroll berbentuk benang, fixed di pinggir kanan.
+            pointerEvents: none jadi tidak pernah menghalangi klik ke konten. */}
+        <ScrollThread />
+
+        {/* Konten tiap halaman, dibungkus transisi fade+slide saat pindah rute */}
+        <main className="relative z-10">
+          <PageTransition>{children}</PageTransition>
+        </main>
+
+        <Footer />
       </body>
     </html>
   );
