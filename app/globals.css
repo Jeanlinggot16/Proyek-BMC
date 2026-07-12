@@ -1,6 +1,6 @@
 /* ==========================================================================
-   BMC Design System — Global Stylesheet
-   Palet: Hitam Dalam #060606 | Merah Prestige #CC1111 | Emas #D4AF37 | Putih Ivory #F5F5F5
+   BMC Design System — Global Stylesheet (WARM DARK EDITION)
+   Palet: Hitam Hangat #0C0A08 | Merah Bata #C0392B | Emas #D4AF37 | Ivory #F5F5F5
    ========================================================================== */
 
 /* ─── 1. Impor Dependensi ─────────────────────────────────────────────────── */
@@ -11,12 +11,36 @@
 /* ─── 2. Varian Kustom ────────────────────────────────────────────────────── */
 @custom-variant dark (&:is(.dark *));
 
-/* ─── 3. Token Warna BMC ──────────────────────────────────────────────────── */
+/* ─── 3. Token Warna BMC — WARM EDITION ───────────────────────────────────── */
 @theme {
-  --color-bmc-red:   #CC1111;
-  --color-bmc-black: #0A0A0A;
-  --color-bmc-white: #F5F5F5;
-  --color-bmc-gold:  #D4AF37;
+  /* Primary Brand */
+  --color-bmc-red:        #C0392B;  /* Brick red — hangat, manusiawi */
+  --color-bmc-red-hover:  #A93226;  /* Hover state */
+  --color-bmc-black:      #0C0A08;  /* Warm black — ada hint coklat */
+  --color-bmc-white:      #F5F5F5;  /* Ivory white */
+  --color-bmc-gold:       #D4AF37;  /* Gold */
+  --color-bmc-gold-hover: #E8C547;  /* Gold hover */
+
+  /* Background Hierarchy */
+  --color-bmc-bg-primary:    #100E0C;  /* Container utama */
+  --color-bmc-bg-secondary:  #0A0806;  /* Input fields */
+  --color-bmc-bg-tertiary:   #141210;  /* Hover surface */
+
+  /* Text Hierarchy */
+  --color-bmc-text-primary:      #F5F5F5;  /* Headline */
+  --color-bmc-text-secondary:    #E8E6E0;  /* Body text */
+  --color-bmc-text-muted:        #B8B8C0;  /* Description, labels (dinaikkan) */
+  --color-bmc-text-placeholder:  #787886;  /* Placeholder (4.6:1) */
+  --color-bmc-text-disabled:     #5A5A66;  /* Disabled text */
+
+  /* Border Hierarchy */
+  --color-bmc-border-default:  rgba(255, 255, 255, 0.08);
+  --color-bmc-border-hover:    rgba(255, 255, 255, 0.15);
+  --color-bmc-border-active:   rgba(212, 175, 55, 0.40);
+
+  /* Accent */
+  --color-bmc-rose:      #FF6B6B;  /* Warning, error */
+  --color-bmc-terracotta: #D3544D; /* Variasi hangat */
 }
 
 /* ─── 4. Scrollbar Gelap Mewah ────────────────────────────────────────────── */
@@ -25,59 +49,67 @@
 }
 
 ::-webkit-scrollbar-track {
-  background: #060606;
+  background: #0A0806;
 }
 
 ::-webkit-scrollbar-thumb {
   background:    #1F1F1F;
   border-radius: 99px;
-  border:        1px solid #060606;
+  border:        1px solid #0A0806;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #CC1111;
+  background: #C0392B;
 }
 
 /* ─── 5. Pengaturan Dasar HTML & Body ─────────────────────────────────────── */
 html {
   scroll-behavior: smooth;
-  background-color: #060606;
+  background-color: #0C0A08;
 }
 
 body {
   color:            #F5F5F5;
   overflow-x:       hidden;
 
-  /* Latar global: Bara Perapian + Anyaman (versi lembut) */
-  background-color: #060606;
+  /* Latar global: Bara Perapian + Grain Organik (versi minimalis hangat) */
+  background-color: #0C0A08;
   background-image:
-    radial-gradient(ellipse 70% 55% at 12% 6%, rgba(204,17,17,0.12), transparent 62%),
-    radial-gradient(ellipse 65% 55% at 88% 94%, rgba(212,175,55,0.08), transparent 62%),
-    radial-gradient(ellipse 90% 60% at 50% 50%, rgba(20,12,14,0.45), transparent 70%),
-    repeating-linear-gradient(45deg, rgba(255,255,255,0.010) 0px, rgba(255,255,255,0.010) 1px, transparent 1px, transparent 9px),
-    repeating-linear-gradient(-45deg, rgba(255,255,255,0.009) 0px, rgba(255,255,255,0.009) 1px, transparent 1px, transparent 9px);
+    /* Bara perapian — merah redup di atas */
+    radial-gradient(ellipse 70% 55% at 12% 6%, rgba(192,57,43,0.10), transparent 62%),
+    /* Emas hangat di bawah */
+    radial-gradient(ellipse 65% 55% at 88% 94%, rgba(212,175,55,0.06), transparent 62%),
+    /* Ambient warmth di tengah */
+    radial-gradient(ellipse 90% 60% at 50% 50%, rgba(20,12,14,0.35), transparent 70%),
+    /* Grain texture organik (seperti kertas daur ulang) */
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.025'/%3E%3C/svg%3E");
   background-attachment: fixed;
   background-repeat: no-repeat;
 }
 
-/* ─── 6. Efek Pendaran (Glow Effects) ─────────────────────────────────────── */
+/* ─── 6. Efek Pendaran & Animasi Kustom ────────────────────────────────────── */
 .shadow-glow-red {
-  box-shadow: 0 0 30px rgba(204, 17, 17, 0.25);
+  box-shadow: 0 0 30px rgba(192, 57, 43, 0.25);
 }
 
 .shadow-glow-gold {
   box-shadow: 0 0 30px rgba(212, 175, 55, 0.20);
 }
 
+.shadow-glow-warm {
+  box-shadow: 
+    0 0 40px rgba(212, 175, 55, 0.15),
+    0 0 80px rgba(180, 100, 30, 0.08),
+    0 0 120px rgba(200, 80, 20, 0.04);
+}
+
 .shadow-glow-combined {
   box-shadow:
-    0 0 40px rgba(204, 17, 17, 0.15),
+    0 0 40px rgba(192, 57, 43, 0.15),
     0 0 40px rgba(212, 175, 55, 0.10);
 }
 
-/* ─── 7. Animasi Kustom ───────────────────────────────────────────────────── */
-
-/* 7a. Fade In & Slide Up */
+/* 6a. Keyframes */
 @keyframes fadeInUp {
   from {
     opacity:   0;
@@ -89,31 +121,49 @@ body {
   }
 }
 
-.animate-fadeIn {
-  animation: fadeInUp 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-/* 7b. Floating / Melayang */
 @keyframes float {
   0%   { transform: translateY(0px)   rotate(0deg); }
   50%  { transform: translateY(-12px) rotate(1deg); }
   100% { transform: translateY(0px)   rotate(0deg); }
 }
 
+@keyframes warmPulse {
+  0%, 100% { box-shadow: 0 0 20px rgba(192,57,43,0.3); }
+  50%      { box-shadow: 0 0 35px rgba(192,57,43,0.5), 0 0 60px rgba(212,175,55,0.2); }
+}
+
+@keyframes logoTraceAnimation {
+  0%   { stroke-dashoffset: 200; }
+  100% { stroke-dashoffset: 0; }
+}
+
+/* 6b. Kelas Animasi */
+.animate-fadeIn {
+  animation: fadeInUp 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
 .animate-float {
   animation: float 6s ease-in-out infinite;
 }
 
-/* 7c. Transisi Premium */
+.animate-warm-pulse {
+  animation: warmPulse 3s ease-in-out infinite;
+}
+
 .transition-premium {
   transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* 7d. Kilau benang menyapu (shine sweep) saat hover */
+.bmc-logo-trace {
+  animation: logoTraceAnimation 4.5s linear infinite;
+}
+
+/* 6c. Efek Kilau Sapuan (Shine Sweep) */
 .bmc-shine {
   position: relative;
   overflow: hidden;
 }
+
 .bmc-shine::after {
   content: '';
   position: absolute;
@@ -131,51 +181,12 @@ body {
   transition: left 0.6s cubic-bezier(0.16, 1, 0.3, 1);
   pointer-events: none;
 }
+
 .bmc-shine:hover::after {
   left: 130%;
 }
 
-/* 7e. Animasi global (dipindah dari layout.tsx agar tidak inject <style> di setiap render) */
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50%      { opacity: 0.4; }
-}
-
-@keyframes logoTraceAnimation {
-  0%   { stroke-dashoffset: 200; }
-  100% { stroke-dashoffset: 0; }
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(360deg); }
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
-
-@keyframes overlayFade {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
-
-@keyframes panelDropIn {
-  from { opacity: 0; transform: translateY(-12px) scale(0.98); }
-  to   { opacity: 1; transform: translateY(0) scale(1); }
-}
-
-@keyframes panelItemIn {
-  from { opacity: 0; transform: translateX(-8px); }
-  to   { opacity: 1; transform: translateX(0); }
-}
-
-.bmc-logo-trace {
-  animation: logoTraceAnimation 4.5s linear infinite;
-}
-
-/* ─── 8. Sistem Design Token (Shadcn / Tailwind) ─────────────────────────── */
+/* ─── 7. Sistem Design Token (Shadcn / Tailwind v4) ─────────────────────── */
 @theme inline {
   /* Tipografi */
   --font-heading: var(--font-sans);
@@ -228,7 +239,7 @@ body {
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-/* ─── 9. Variabel CSS — Mode Terang (Light Mode) ────────────────────────── */
+/* ─── 8. Variabel CSS — Mode Terang (Light Mode) ────────────────────────── */
 :root {
   --radius: 0.625rem;
 
@@ -260,7 +271,7 @@ body {
   --ring:              oklch(0.708 0 0);
 }
 
-/* ─── 10. Variabel CSS — Mode Gelap (Dark Mode) ──────────────────────────── */
+/* ─── 9. Variabel CSS — Mode Gelap (Dark Mode) ──────────────────────────── */
 .dark {
   --background:        oklch(0.145 0 0);
   --foreground:        oklch(0.985 0 0);
@@ -290,18 +301,85 @@ body {
   --ring:              oklch(0.556 0 0);
 }
 
-/* ─── 11. Layer Basis (Base Layer) ───────────────────────────────────────── */
+/* ─── 10. Layer Basis (Base Layer) ───────────────────────────────────────── */
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
 
   body {
-    /* Hanya warna teks di sini; latar diatur di bagian 5 agar gradasi tidak tertimpa */
     @apply text-[#F5F5F5];
   }
 
   html {
     @apply font-sans;
+  }
+}
+
+/* ─── 11. Direktif Utilitas Tailwind v4 Custom (@utility) ────────────────── */
+
+/* 11a. Utilitas Bawaan BMC */
+@utility placeholder-bmc {
+  &::placeholder {
+    color: var(--color-bmc-text-placeholder);
+    opacity: 1;
+  }
+}
+
+@utility focus-ring-bmc {
+  &:focus-visible {
+    outline: none;
+    border-color: var(--color-bmc-gold);
+    box-shadow: 0 0 0 2px var(--color-bmc-border-active);
+  }
+}
+
+@utility animate-fadeInUp {
+  animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@utility shadow-bmc-card {
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+@utility shadow-bmc-button {
+  box-shadow: 0 0 20px rgba(192, 57, 43, 0.3);
+}
+
+@utility shadow-bmc-button-hover {
+  box-shadow: 0 0 32px rgba(192, 57, 43, 0.45);
+}
+
+/* 11b. Pola Latar Bertekstur (Integrasi Claude & Peningkatan Standar v4) */
+@utility bg-pattern-thread {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='72' height='72' viewBox='0 0 24 24' fill='none' stroke='%23D4AF37' stroke-width='0.7' stroke-opacity='0.05'%3E%3Ccircle cx='12' cy='12' r='6.5'/%3E%3Cpath d='M6 12c1.8-2.6 3.6-2.6 5.5 0s3.7 2.6 5.5 0'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 72px 72px;
+}
+
+@utility bg-pattern-dialog {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 24 24' fill='none' stroke='%23FFFFFF' stroke-width='0.7' stroke-opacity='0.04'%3E%3Cpath d='M4 5.5h9v6H8l-2.5 2.5v-2.5H4z'/%3E%3Cpath d='M12 9.5h8v5.5h-1.8v2.5l-2.5-2.5H12z'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 80px 80px;
+}
+
+@utility bg-pattern-weave {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 24 24' fill='none' stroke='%23C0392B' stroke-width='0.7' stroke-opacity='0.05'%3E%3Cpath d='M4 8c4 0 4 8 8 8s4-8 8-8'/%3E%3Cpath d='M4 16c4 0 4-8 8-8s4 8 8 8'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 64px 64px;
+}
+
+/* 11c. Efek Transisi Latar & Interaktif Lanjutan */
+@utility mask-gradient-b {
+  mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 85%, rgba(0,0,0,0) 100%);
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 85%, rgba(0,0,0,0) 100%);
+}
+
+@utility bmc-card-interactive {
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  &:hover {
+    transform: translateY(-4px);
+    border-color: var(--color-bmc-border-hover);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5), 0 0 25px rgba(212, 175, 55, 0.05);
   }
 }

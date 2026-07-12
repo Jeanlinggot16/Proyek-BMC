@@ -1,13 +1,89 @@
 // app/dinding/page.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { SAMPLE_THREADS, THREAD_COLOR, ThreadItem } from '@/constants/threadsData';
-import { SectionLabel, LoadingSpinner } from '@/components/ui/SharedComponents';
+import { SectionLabel } from '@/components/ui/SharedComponents';
+import { cn } from '@/lib/utils';
 
+/* ─── Constants ─── */
 const STORAGE_KEY = 'bmc_threads_local';
 const COLORS: Array<'red' | 'gold' | 'rose'> = ['red', 'gold', 'rose'];
+const MAX_CHAR = 180;
 
+/* ────────────────────────────────────────────────────────────────────────── */
+/*  SUB-KOMPONEN: ThreadCard (kartu helai benang)                            */
+/* ────────────────────────────────────────────────────────────────────────── */
+function ThreadCard({ thread }: { thread: ThreadItem }) {
+  const c = THREAD_COLOR[thread.color] || THREAD_COLOR.red;
+
+  return (
+    <article
+      className={cn(
+        'break-inside-avoid mb-4 rounded-xl p-5 sm:p-6 transition-all duration-300',
+        'hover:shadow-[0_8px_24px_rgba(0,0,0,0.3)] hover:-translate-y-0.5',
+        'animate-fadeIn'
+      )}
+      style={{
+        background: c.bg,
+        border: `1px solid ${c.border}`,
+        borderLeft: `3px solid ${c.accent}`,
+      }}
+    >
+      {/* Pesan */}
+      <blockquote className="text-sm sm:text-[14px] text-[#E8E6E0] leading-relaxed italic mb-4 font-serif">
+        &ldquo;{thread.pesan}&rdquo;
+      </blockquote>
+
+      {/* Footer: penulis + indikator warna */}
+      <div className="flex items-center gap-2.5">
+        <span
+          className="w-2 h-2 rounded-full shrink-0"
+          style={{ background: c.accent }}
+          aria-hidden="true"
+        />
+        <span
+          className="text-[11px] sm:text-xs font-bold tracking-wide"
+          style={{ color: c.accent }}
+        >
+          {thread.nama}
+        </span>
+      </div>
+    </article>
+  );
+}
+
+/* ────────────────────────────────────────────────────────────────────────── */
+/*  SUB-KOMPONEN: CharacterCounter                                        */
+/* ────────────────────────────────────────────────────────────────────────── */
+function CharacterCounter({ current, max }: { current: number; max: number }) {
+  const isNearLimit = current > max * 0.85;
+  const isAtLimit = current >= max;
+
+  return (
+    <div className="flex justify-between items-center mt-1.5">
+      <span className="text-[10px] text-[#8A8A94]">
+        {current === 0 ? 'Tulis minimal 1 karakter' : ''}
+      </span>
+      <span
+        className={cn(
+          'text-[10px] font-medium tabular-nums transition-colors duration-200',
+          isAtLimit
+            ? 'text-[#FF5555]'
+            : isNearLimit
+            ? 'text-[#D4AF37]'
+            : 'text-[#8A8A94]'
+        )}
+      >
+        {current}/{max}
+      </span>
+    </div>
+  );
+}
+
+/* ────────────────────────────────────────────────────────────────────────── */
+/*  KOMPONEN UTAMA                                                           */
+/* ────────────────────────────────────────────────────────────────────────── */
 export default function DindingPage() {
   const [threads, setThreads] = useState<ThreadItem[]>(SAMPLE_THREADS);
   const [pesan, setPesan] = useState('');
@@ -15,102 +91,152 @@ export default function DindingPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [justSent, setJustSent] = useState(false);
 
-  // Muat kiriman lokal (localStorage) lalu gabung dengan data contoh
+  // Ref untuk auto-focus kembali ke textarea setelah kirim
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Ref untuk mencegah double-submit
+  const isSubmittingRef = useRef(false);
+
+  /* ─── Load local threads dari localStorage ─── */
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
         const local: ThreadItem[] = JSON.parse(raw);
-        setThreads([...local, ...SAMPLE_THREADS]);
+        setThreads((prev) => [...local, ...prev]);
       }
     } catch {
-      // abaikan jika localStorage tidak tersedia
+      // Silent fail jika localStorage tidak tersedia
     }
   }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!pesan.trim()) return;
+  /* ─── Handler submit dengan anti double-submit ─── */
+  const handleSubmit = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
 
-    setIsLoading(true);
+      const trimmedPesan = pesan.trim();
+      if (!trimmedPesan) return;
+      if (isSubmittingRef.current) return;
 
-    const newThread: ThreadItem = {
-      id: `local_${Date.now()}`,
-      pesan: pesan.trim(),
-      nama: nama.trim() || 'Anonim',
-      color: COLORS[Math.floor(Math.random() * COLORS.length)],
-    };
+      isSubmittingRef.current = true;
+      setIsLoading(true);
 
-    // 1) Kirim ke Spreadsheet (pola sama seperti form daftar/saran)
-    try {
-      await fetch('/api/submit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          formType: 'thread',
-          nama: newThread.nama,
-          pesan: newThread.pesan,
-          color: newThread.color,
-        }),
-      });
-    } catch (err) {
-      // Walau gagal kirim ke server, helai tetap tampil lokal agar pengalaman mulus
-      console.error('Gagal mengirim thread ke server:', err);
-    }
+      const newThread: ThreadItem = {
+        id: `local_${Date.now()}`,
+        pesan: trimmedPesan,
+        nama: nama.trim() || 'Anonim',
+        color: COLORS[Math.floor(Math.random() * COLORS.length)],
+      };
 
-    // 2) Simpan & tampilkan secara lokal
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      const local: ThreadItem[] = raw ? JSON.parse(raw) : [];
-      const updated = [newThread, ...local];
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-    } catch {
-      // abaikan
-    }
+      // Kirim ke server (best-effort, tidak blocking UX)
+      try {
+        await fetch('/api/submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            formType: 'thread',
+            nama: newThread.nama,
+            pesan: newThread.pesan,
+            color: newThread.color,
+          }),
+        });
+      } catch (err) {
+        console.error('Gagal mengirim thread ke server:', err);
+      }
 
-    setThreads((prev) => [newThread, ...prev]);
-    setPesan('');
-    setNama('');
-    setIsLoading(false);
-    setJustSent(true);
-    setTimeout(() => setJustSent(false), 4000);
-  };
+      // Simpan ke localStorage
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        const local: ThreadItem[] = raw ? JSON.parse(raw) : [];
+        const updated = [newThread, ...local].slice(0, 50); // Batasi 50 item lokal
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+      } catch {
+        // Silent fail
+      }
+
+      // Update state
+      setThreads((prev) => [newThread, ...prev]);
+      setPesan('');
+      setNama('');
+      setIsLoading(false);
+      isSubmittingRef.current = false;
+      setJustSent(true);
+
+      // Auto-focus kembali ke textarea
+      setTimeout(() => {
+        textareaRef.current?.focus();
+      }, 100);
+
+      // Clear success message setelah 4 detik
+      setTimeout(() => setJustSent(false), 4000);
+    },
+    [pesan, nama]
+  );
 
   return (
-    <section style={{ padding: '64px 24px', maxWidth: '1100px', margin: '0 auto', position: 'relative', zIndex: 10 }} aria-label="Dinding Benang">
-      <div style={{ textAlign: 'center', marginBottom: '48px' }}>
+    <main
+      className="relative z-10 px-5 py-12 sm:px-6 sm:py-16 md:py-20 max-w-[1100px] mx-auto"
+      aria-label="Dinding Benang"
+    >
+      {/* ─── HEADER ──────────────────────────────────────────────────── */}
+      <header className="text-center mb-12 sm:mb-14">
         <SectionLabel gold>Ruang Perjumpaan</SectionLabel>
-        <h1 style={{ fontSize: 'clamp(2rem, 4.5vw, 3.2rem)', fontWeight: 800, fontFamily: 'serif', marginBottom: '12px' }}>
-          Dinding <span style={{ color: '#CC1111' }}>Benang</span>
+        <h1 className="text-[2rem] sm:text-[2.5rem] md:text-[3.2rem] font-extrabold font-serif tracking-tight text-[#F5F5F5] mb-3">
+          Dinding{' '}
+          <span className="text-[#CC1111] [text-shadow:0_0_20px_rgba(204,17,17,0.3)]">
+            Benang
+          </span>
         </h1>
-        <p style={{ fontSize: '14px', color: '#B4B4BD', lineHeight: 1.7, maxWidth: '600px', margin: '0 auto' }}>
-          Tinggalkan satu helai benangmu, sepatah harapan, refleksi, atau sapaan. Setiap helai dirajut bersama menjadi anyaman persaudaraan kita.
+        <p className="text-sm sm:text-[14px] text-[#B4B4BD] leading-relaxed max-w-[600px] mx-auto">
+          Tinggalkan satu helai benangmu, sepatah harapan, refleksi, atau sapaan.
+          Setiap helai dirajut bersama menjadi anyaman persaudaraan kita.
         </p>
-      </div>
+      </header>
 
-      {/* Form helai benang */}
-      <div style={{ background: '#0D0D0D', border: '1px solid rgba(255,255,255,0.04)', borderRadius: '20px', padding: '32px', maxWidth: '640px', margin: '0 auto 56px' }}>
-        <form onSubmit={handleSubmit}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      {/* ─── FORM HELAI BENANG ───────────────────────────────────────── */}
+      <div className="bg-[#0D0D0D] border border-white/5 rounded-2xl p-6 sm:p-8 max-w-[640px] mx-auto mb-14 sm:mb-16 shadow-[0_8px_32px_rgba(0,0,0,0.3)]">
+        <form onSubmit={handleSubmit} noValidate>
+          <fieldset className="flex flex-col gap-5 border-none p-0" disabled={isLoading}>
+            <legend className="sr-only">Tulis helai benang baru</legend>
+
+            {/* Textarea Pesan */}
             <div>
-              <label htmlFor="pesan" style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#B4B4BD', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '8px' }}>
-                Helai Benangmu *
+              <label
+                htmlFor="pesan"
+                className="block text-[11px] font-bold text-[#B4B4BD] tracking-[0.08em] uppercase mb-2"
+              >
+                Helai Benangmu <span className="text-[#CC1111]" aria-hidden="true">*</span>
               </label>
               <textarea
+                ref={textareaRef}
                 id="pesan"
                 value={pesan}
                 onChange={(e) => setPesan(e.target.value)}
                 placeholder="Tuliskan harapan, refleksi, atau sapaan singkatmu..."
                 rows={3}
-                maxLength={180}
+                maxLength={MAX_CHAR}
                 required
-                style={{ width: '100%', background: '#060606', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', padding: '14px 16px', fontSize: '13px', color: '#FFF', outline: 'none', resize: 'vertical', lineHeight: 1.6 }}
+                aria-required="true"
+                className={cn(
+                  'w-full bg-[#060606] border border-white/10 rounded-xl px-4 py-3.5 text-[13px] text-[#E8E6E0] placeholder:text-[#8A8A94] outline-none resize-y leading-relaxed transition-all duration-300',
+                  'hover:border-white/20',
+                  'focus:border-[#D4AF37] focus:ring-2 focus:ring-[#D4AF37]/30 focus:bg-[#0A0A0A]'
+                )}
               />
-              <div style={{ textAlign: 'right', fontSize: '10px', color: '#8A8A94', marginTop: '4px' }}>{pesan.length}/180</div>
+              <CharacterCounter current={pesan.length} max={MAX_CHAR} />
             </div>
+
+            {/* Input Nama */}
             <div>
-              <label htmlFor="nama" style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#B4B4BD', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '8px' }}>
-                Nama (boleh dikosongkan untuk Anonim)
+              <label
+                htmlFor="nama"
+                className="block text-[11px] font-bold text-[#B4B4BD] tracking-[0.08em] uppercase mb-2"
+              >
+                Nama{' '}
+                <span className="text-[#8A8A94] font-normal normal-case tracking-normal">
+                  (boleh dikosongkan untuk Anonim)
+                </span>
               </label>
               <input
                 id="nama"
@@ -118,54 +244,103 @@ export default function DindingPage() {
                 value={nama}
                 onChange={(e) => setNama(e.target.value)}
                 placeholder="Nama atau inisialmu"
-                style={{ width: '100%', background: '#060606', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', padding: '12px 16px', fontSize: '13px', color: '#FFF', outline: 'none' }}
+                className={cn(
+                  'w-full bg-[#060606] border border-white/10 rounded-xl px-4 py-3 text-[13px] text-[#E8E6E0] placeholder:text-[#8A8A94] outline-none transition-all duration-300',
+                  'hover:border-white/20',
+                  'focus:border-[#D4AF37] focus:ring-2 focus:ring-[#D4AF37]/30 focus:bg-[#0A0A0A]'
+                )}
               />
             </div>
+
+            {/* Submit Button */}
             <button
               type="submit"
               disabled={!pesan.trim() || isLoading}
-              style={{ background: '#CC1111', color: '#FFF', border: 'none', borderRadius: '100px', padding: '14px', fontSize: '11px', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', cursor: 'pointer', boxShadow: '0 0 20px rgba(204,17,17,0.3)', opacity: !pesan.trim() || isLoading ? 0.5 : 1, transition: 'all 0.3s ease' }}
+              aria-disabled={!pesan.trim() || isLoading}
+              aria-busy={isLoading}
+              className={cn(
+                'w-full rounded-full py-3.5 sm:py-4 text-[11px] font-bold tracking-[0.12em] uppercase transition-all duration-300',
+                'bg-[#CC1111] text-white shadow-[0_0_20px_rgba(204,17,17,0.3)]',
+                'hover:bg-[#AA0A0A] hover:shadow-[0_0_32px_rgba(204,17,17,0.45)]',
+                'active:scale-[0.98]',
+                'disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-[#CC1111] disabled:hover:shadow-[0_0_20px_rgba(204,17,17,0.3)] disabled:active:scale-100'
+              )}
             >
-              {isLoading ? <LoadingSpinner /> : 'Rajut Helai Benangku →'}
+              {isLoading ? (
+                <span className="inline-flex items-center justify-center gap-2">
+                  <svg
+                    className="animate-spin h-4 w-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                    />
+                  </svg>
+                  Merajut...
+                </span>
+              ) : (
+                'Rajut Helai Benangku →'
+              )}
             </button>
+
+            {/* Success feedback */}
             {justSent && (
-              <p style={{ textAlign: 'center', fontSize: '12px', color: '#D4AF37', animation: 'fadeIn 0.5s' }}>
-                Terima kasih, helaimu telah terajut di dinding ini. 🧵
+              <p
+                role="status"
+                className="text-center text-xs text-[#D4AF37] font-medium animate-fadeIn flex items-center justify-center gap-1.5"
+              >
+                <span aria-hidden="true">🧵</span>
+                Terima kasih, helaimu telah terajut di dinding ini.
               </p>
             )}
-          </div>
+          </fieldset>
         </form>
       </div>
 
-      {/* Anyaman helai */}
-      <div style={{ columnGap: '16px', columnWidth: '280px' }}>
-        {threads.map((t) => {
-          const c = THREAD_COLOR[t.color] || THREAD_COLOR.red;
-          return (
-            <div
-              key={t.id}
-              style={{
-                breakInside: 'avoid',
-                marginBottom: '16px',
-                background: c.bg,
-                border: `1px solid ${c.border}`,
-                borderLeft: `3px solid ${c.accent}`,
-                borderRadius: '12px',
-                padding: '20px 22px',
-                animation: 'fadeIn 0.6s',
-              }}
-            >
-              <p style={{ fontSize: '14px', color: '#E8E6E0', lineHeight: 1.7, fontStyle: 'italic', marginBottom: '14px', fontFamily: 'serif' }}>
-                &ldquo;{t.pesan}&rdquo;
-              </p>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: c.accent }} />
-                <span style={{ fontSize: '12px', fontWeight: 700, color: c.accent }}>{t.nama}</span>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </section>
+      {/* ─── ANYAMAN HELAI (Masonry Grid) ────────────────────────────── */}
+      {threads.length === 0 ? (
+        <div className="text-center py-12">
+          <span className="text-4xl opacity-30 block mb-3" aria-hidden="true">🧵</span>
+          <p className="text-[#9A9AA5] text-sm">Belum ada helai benang. Jadilah yang pertama merajut!</p>
+        </div>
+      ) : (
+        <>
+          <p className="text-xs text-[#8A8A94] mb-6 font-medium tracking-wide uppercase text-center sm:text-left">
+            <span className="text-[#D4AF37] font-bold">{threads.length}</span> helai telah terajut
+          </p>
+
+          {/* Masonry layout menggunakan CSS columns */}
+          <div
+            className="gap-4 sm:gap-5"
+            style={{
+              columnCount: 1,
+            }}
+            className="
+              columns-1
+              sm:columns-2
+              lg:columns-3
+              gap-4
+              sm:gap-5
+            "
+          >
+            {threads.map((t) => (
+              <ThreadCard key={t.id} thread={t} />
+            ))}
+          </div>
+        </>
+      )}
+    </main>
   );
 }

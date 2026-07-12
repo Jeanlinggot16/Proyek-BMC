@@ -65,31 +65,157 @@ FILE: app\arsip\page.tsx
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState, useCallback, useEffect } from 'react';
 import { getCombinedArchives } from '@/constants/communityData';
 import SearchInput from '@/components/ui/SearchInput';
+import { cn } from '@/lib/utils';
 
+/* ─── Constants ─── */
 const MONTHS = [
   'Semua Bulan', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
   'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
-];
+] as const;
 
 const PAGE_SIZE = 6;
 
+/* ─── Sub-komponen Kartu Arsip ─── */
+function ArchiveCard({ item }: { item: ReturnType<typeof getCombinedArchives>[number] }) {
+  return (
+    <Link
+      href={`/arsip/${item.slug}`}
+      className="group relative rounded-xl border border-white/5 bg-[#0D0D0D]/80 backdrop-blur-sm p-6 hover:border-[#D4AF37]/40 hover:bg-[#0D0D0D] transition-all duration-300 flex flex-col h-full"
+    >
+      {/* Tanggal badge */}
+      <span className="inline-flex items-center gap-1.5 self-start text-[11px] font-bold tracking-[0.08em] uppercase text-[#D4AF37] bg-[#D4AF37]/10 px-2.5 py-1 rounded-full mb-4">
+        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        {item.tanggal}
+      </span>
+
+      {/* Judul */}
+      <h2 className="font-bold text-[#F5F5F5] text-lg mb-2.5 group-hover:text-white transition-colors leading-snug">
+        {item.judul}
+      </h2>
+
+      {/* Ringkasan */}
+      <p className="text-sm text-[#9A9AA5] leading-relaxed line-clamp-3 flex-1">
+        {item.ringkas}
+      </p>
+
+      {/* Read more indicator */}
+      <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between">
+        <span className="text-[11px] text-[#D4AF37] font-medium tracking-wide opacity-0 group-hover:opacity-100 transition-opacity duration-300 translate-x-0 group-hover:translate-x-1 transition-transform">
+          Baca selengkapnya →
+        </span>
+        <span className="text-[10px] text-[#8A8A94] font-medium uppercase tracking-wider">
+          Arsip
+        </span>
+      </div>
+    </Link>
+  );
+}
+
+/* ─── Komponen Pagination (dipisahkan) ─── */
+function Pagination({
+  page,
+  totalPages,
+  filteredLength,
+  start,
+  onPageChange,
+}: {
+  page: number;
+  totalPages: number;
+  filteredLength: number;
+  start: number;
+  onPageChange: (newPage: number) => void;
+}) {
+  const end = Math.min(start + PAGE_SIZE, filteredLength);
+
+  return (
+    <div className="mt-10 flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 border-t border-white/5">
+      {/* Info */}
+      <p className="text-xs text-[#8A8A94] font-medium order-2 sm:order-1">
+        Menampilkan{' '}
+        <span className="text-[#E8E6E0] font-bold">{start + 1}</span>
+        {' '}-{' '}
+        <span className="text-[#E8E6E0] font-bold">{end}</span>
+        {' '}dari{' '}
+        <span className="text-[#D4AF37] font-bold">{filteredLength}</span> arsip
+      </p>
+
+      {/* Navigation */}
+      <div className="flex items-center gap-2 order-1 sm:order-2">
+        <button
+          type="button"
+          onClick={() => onPageChange(page - 1)}
+          disabled={page === 1}
+          className={cn(
+            'px-4 py-2 text-xs font-bold rounded-xl border transition-all duration-300',
+            page === 1
+              ? 'border-white/5 text-[#8A8A94]/40 cursor-not-allowed'
+              : 'border-white/10 text-[#E8E6E0] hover:border-[#D4AF37]/40 hover:text-[#D4AF37] hover:bg-[#D4AF37]/5 active:scale-95'
+          )}
+        >
+          ← Sebelumnya
+        </button>
+
+        {/* Page indicator */}
+        <div className="flex items-center gap-1 px-3">
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+            <button
+              key={p}
+              onClick={() => onPageChange(p)}
+              className={cn(
+                'w-8 h-8 text-xs font-bold rounded-lg transition-all duration-300',
+                p === page
+                  ? 'bg-[#CC1111] text-white shadow-[0_0_12px_rgba(204,17,17,0.4)]'
+                  : 'text-[#8A8A94] hover:text-[#E8E6E0] hover:bg-white/5'
+              )}
+            >
+              {p}
+            </button>
+          ))}
+        </div>
+
+        <button
+          type="button"
+          onClick={() => onPageChange(page + 1)}
+          disabled={page === totalPages}
+          className={cn(
+            'px-4 py-2 text-xs font-bold rounded-xl border transition-all duration-300',
+            page === totalPages
+              ? 'border-white/5 text-[#8A8A94]/40 cursor-not-allowed'
+              : 'border-white/10 text-[#E8E6E0] hover:border-[#D4AF37]/40 hover:text-[#D4AF37] hover:bg-[#D4AF37]/5 active:scale-95'
+          )}
+        >
+          Berikutnya →
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Komponen Utama ─── */
 export default function ArsipPage() {
   const [month, setMonth] = useState<number>(0);
   const [year, setYear] = useState<string>('Semua Tahun');
   const [q, setQ] = useState('');
   const [page, setPage] = useState(1);
 
+  // Data arsip gabungan (static, hanya dipanggil sekali)
   const allArchives = useMemo(() => getCombinedArchives(), []);
 
+  // Daftar tahun unik
   const years = useMemo(() => {
-    const ys = Array.from(new Set(allArchives.map((e) => new Date(e.tanggal).getFullYear().toString())));
-    return ['Semua Tahun', ...ys.sort()];
+    const ys = Array.from(
+      new Set(allArchives.map((item) => new Date(item.tanggal).getFullYear().toString()))
+    );
+    return ['Semua Tahun', ...ys.sort((a, b) => b.localeCompare(a))]; // Terbaru dulu
   }, [allArchives]);
 
-  const filtered = useMemo(() => {
+  // Filter logic
+  const getFilteredArchives = useCallback(() => {
     const query = q.trim().toLowerCase();
 
     return allArchives.filter((item) => {
@@ -97,105 +223,147 @@ export default function ArsipPage() {
       const m = d.getMonth() + 1;
       const y = d.getFullYear().toString();
 
-      const monthOk = month === 0 || m === month;
-      const yearOk = year === 'Semua Tahun' || y === year;
+      if (month !== 0 && m !== month) return false;
+      if (year !== 'Semua Tahun' && y !== year) return false;
 
-      const searchTarget = `${item.judul} ${item.ringkas} ${item.isi.join(' ')}`.toLowerCase();
-      const searchOk = !query || searchTarget.includes(query);
+      if (query) {
+        const searchTarget = `${item.judul} ${item.ringkas} ${item.isi.join(' ')}`.toLowerCase();
+        if (!searchTarget.includes(query)) return false;
+      }
 
-      return monthOk && yearOk && searchOk;
+      return true;
     });
   }, [allArchives, month, year, q]);
 
-  // Reset ke halaman 1 saat filter/search berubah
+  const filtered = useMemo(() => getFilteredArchives(), [getFilteredArchives]);
+
+  // Reset halaman ke 1 setiap kali filter berubah
   useEffect(() => {
     setPage(1);
   }, [month, year, q]);
 
+  // Pagination calculation
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
   const start = (safePage - 1) * PAGE_SIZE;
   const paginated = filtered.slice(start, start + PAGE_SIZE);
 
+  // Handler paging yang aman (clamp)
+  const handlePageChange = useCallback(
+    (newPage: number) => {
+      setPage(Math.max(1, Math.min(totalPages, newPage)));
+    },
+    [totalPages]
+  );
+
   return (
-    <section className="max-w-5xl mx-auto px-6 py-16">
-      <h1 className="text-3xl font-bold mb-4">Arsip Kegiatan</h1>
-      <p className="text-zinc-400 mb-8">Dokumentasi dan ringkasan kegiatan sebelumnya.</p>
-
-      <div className="flex flex-wrap gap-3 mb-8 items-center">
-        <select
-          value={month}
-          onChange={(e) => setMonth(Number(e.target.value))}
-          className="bg-[#0D0D0D] border border-white/10 rounded-lg px-3 py-2 text-sm"
-        >
-          {MONTHS.map((m, idx) => (
-            <option key={m} value={idx}>{m}</option>
-          ))}
-        </select>
-
-        <select
-          value={year}
-          onChange={(e) => setYear(e.target.value)}
-          className="bg-[#0D0D0D] border border-white/10 rounded-lg px-3 py-2 text-sm"
-        >
-          {years.map((y) => (
-            <option key={y} value={y}>{y}</option>
-          ))}
-        </select>
-
-        <SearchInput value={q} onChange={setQ} placeholder="Cari judul, ringkasan, isi arsip..." />
+    <main className="max-w-5xl mx-auto px-5 sm:px-6 py-16 sm:py-20">
+      {/* Header */}
+      <div className="mb-10">
+        <span className="inline-block text-[10px] font-bold tracking-[0.2em] uppercase text-[#D4AF37] mb-3">
+          Dokumentasi
+        </span>
+        <h1 className="text-[2rem] sm:text-[2.5rem] font-extrabold text-[#F5F5F5] font-serif tracking-tight leading-tight mb-3">
+          Arsip Kegiatan
+        </h1>
+        <p className="text-sm text-[#9A9AA5] max-w-xl leading-relaxed">
+          Dokumentasi dan ringkasan kegiatan yang telah terlaksana. Telusuri perjalanan komunitas kami.
+        </p>
       </div>
 
+      {/* Filter Bar */}
+      <div className="flex flex-col sm:flex-row flex-wrap gap-3 mb-10">
+        {/* Select Bulan */}
+        <div className="relative flex-1 min-w-[160px]">
+          <label htmlFor="archive-filter-month" className="sr-only">Filter Bulan</label>
+          <select
+            id="archive-filter-month"
+            value={month}
+            onChange={(e) => setMonth(Number(e.target.value))}
+            className="w-full appearance-none bg-[#0D0D0D] border border-white/10 rounded-xl px-4 py-2.5 pr-10 text-sm text-[#E8E6E0] font-medium cursor-pointer hover:border-white/20 focus:border-[#D4AF37]/50 focus:outline-none focus:ring-1 focus:ring-[#D4AF37]/20 transition-all duration-300"
+          >
+            {MONTHS.map((m, idx) => (
+              <option key={m} value={idx} className="bg-[#121212] text-[#E8E6E0]">
+                {m}
+              </option>
+            ))}
+          </select>
+          <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2">
+            <svg className="w-4 h-4 text-[#8A8A94]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          </div>
+        </div>
+
+        {/* Select Tahun */}
+        <div className="relative flex-1 min-w-[140px]">
+          <label htmlFor="archive-filter-year" className="sr-only">Filter Tahun</label>
+          <select
+            id="archive-filter-year"
+            value={year}
+            onChange={(e) => setYear(e.target.value)}
+            className="w-full appearance-none bg-[#0D0D0D] border border-white/10 rounded-xl px-4 py-2.5 pr-10 text-sm text-[#E8E6E0] font-medium cursor-pointer hover:border-white/20 focus:border-[#D4AF37]/50 focus:outline-none focus:ring-1 focus:ring-[#D4AF37]/20 transition-all duration-300"
+          >
+            {years.map((y) => (
+              <option key={y} value={y} className="bg-[#121212] text-[#E8E6E0]">
+                {y}
+              </option>
+            ))}
+          </select>
+          <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2">
+            <svg className="w-4 h-4 text-[#8A8A94]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          </div>
+        </div>
+
+        {/* Search */}
+        <div className="flex-[2] min-w-[200px]">
+          <SearchInput
+            value={q}
+            onChange={setQ}
+            placeholder="Cari judul, ringkasan, isi arsip..."
+          />
+        </div>
+      </div>
+
+      {/* Hasil */}
       {filtered.length === 0 ? (
-        <p className="text-zinc-400">Belum ada arsip pada filter/pencarian ini.</p>
+        <div className="text-center py-16">
+          <div className="text-5xl mb-4 opacity-30">📂</div>
+          <p className="text-[#9A9AA5] text-lg font-medium">Belum ada arsip pada filter ini.</p>
+          <p className="text-sm text-[#8A8A94] mt-1">Coba ubah bulan, tahun, atau kata kunci pencarian.</p>
+        </div>
       ) : (
         <>
+          {/* Counter */}
+          <p className="text-xs text-[#8A8A94] mb-5 font-medium tracking-wide uppercase">
+            Ditemukan <span className="text-[#D4AF37] font-bold">{filtered.length}</span> arsip
+            {filtered.length > PAGE_SIZE && (
+              <span className="text-[#8A8A94]"> • Halaman {safePage} dari {totalPages}</span>
+            )}
+          </p>
+
+          {/* Grid */}
           <div className="grid sm:grid-cols-2 gap-4">
             {paginated.map((item) => (
-              <Link
-                key={item.slug}
-                href={`/arsip/${item.slug}`}
-                className="rounded-xl border border-white/10 p-5 hover:border-[#D4AF37] transition"
-              >
-                <p className="text-xs text-[#D4AF37] mb-1">{item.tanggal}</p>
-                <h2 className="font-semibold mb-1">{item.judul}</h2>
-                <p className="text-sm text-zinc-400">{item.ringkas}</p>
-              </Link>
+              <ArchiveCard key={item.slug} item={item} />
             ))}
           </div>
 
-          <div className="mt-8 flex items-center justify-between gap-3">
-            <p className="text-xs text-zinc-500">
-              Menampilkan {start + 1}-{Math.min(start + PAGE_SIZE, filtered.length)} dari {filtered.length} arsip
-            </p>
-
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={safePage === 1}
-                className="px-3 py-2 text-xs rounded-lg border border-white/10 disabled:opacity-40"
-              >
-                ← Sebelumnya
-              </button>
-
-              <span className="text-xs text-zinc-400">
-                Halaman {safePage} / {totalPages}
-              </span>
-
-              <button
-                type="button"
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                disabled={safePage === totalPages}
-                className="px-3 py-2 text-xs rounded-lg border border-white/10 disabled:opacity-40"
-              >
-                Berikutnya →
-              </button>
-            </div>
-          </div>
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <Pagination
+              page={safePage}
+              totalPages={totalPages}
+              filteredLength={filtered.length}
+              start={start}
+              onPageChange={handlePageChange}
+            />
+          )}
         </>
       )}
-    </section>
+    </main>
   );
 }
 
@@ -245,262 +413,516 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 ============================================================
 FILE: app\daftar\page.tsx
 ============================================================
-// app/daftar/page.tsx
 'use client';
 
-import { useState, useRef } from 'react';
-import { SectionLabel, LoadingSpinner } from '@/components/ui/SharedComponents';
+import { useState, useRef, useCallback } from 'react';
+import { SectionLabel } from '@/components/ui/SharedComponents';
 import { PageHero } from '@/components/ui/PageHero';
 import { BmcButton } from '@/components/ui/BmcButton';
 import { cn } from '@/lib/utils';
 
-const STEP_LABELS = ['Identitas', 'Eksplorasi', 'Komitmen'];
+/* ─── Constants ─── */
+const STEP_LABELS = ['Perkenalan', 'Cerita Kamu', 'Komitmen'] as const;
 
-export default function DaftarPage() {
-  const [step, setStep] = useState(1);
-  const [formData, setFormData] = useState({
-    nama: '',
-    email: '',
-    telp: '',
-    asal: '',
-    kesibukan: '',
-    alasan: '',
-    komitmen: false,
-  });
-  const [submitted, setSubmitted] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  // Pesan error ditampilkan inline, BUKAN lewat alert() browser
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const liveRegionRef = useRef<HTMLDivElement>(null);
+const INITIAL_FORM_DATA = {
+  nama: '',
+  email: '',
+  telp: '',
+  asal: '',
+  kesibukan: '',
+  alasan: '',
+  komitmen: false,
+};
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
+type FormData = typeof INITIAL_FORM_DATA;
 
-  const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, checked } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: checked }));
-  };
+/* ─── StepIndicator ─────────────────────────────────────────────────────── */
+function StepIndicator({ currentStep }: { currentStep: number }) {
+  return (
+    <div className="flex justify-between mb-8 sm:mb-10 relative" role="list" aria-label="Tahapan formulir">
+      <div className="absolute top-3.5 left-[10%] right-[10%] h-px z-0 bg-white/5" aria-hidden="true" />
 
-  const step1Valid = !!(formData.nama && formData.email && formData.telp);
+      {STEP_LABELS.map((label, i) => {
+        const n = i + 1;
+        const isActive = currentStep >= n;
+        const isCompleted = currentStep > n;
 
-  const handleNextStep = () => {
-    if (step === 1 && !step1Valid) return;
-    setStep((prev) => prev + 1);
-  };
+        return (
+          <div key={label} className="flex flex-col items-center z-[1]" aria-current={currentStep === n ? 'step' : undefined}>
+            <span
+              className={cn(
+                'w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold transition-all duration-300',
+                isActive
+                  ? 'bg-[#C0392B] border-[#C0392B] text-white shadow-[0_0_12px_rgba(192,57,43,0.4)]'
+                  : 'bg-[#0A0806] border-white/10 text-[#A0A0AA]'
+              )}
+              style={{ borderWidth: '1px', borderStyle: 'solid' }}
+            >
+              {isCompleted ? (
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+              ) : (
+                n
+              )}
+            </span>
 
-  const handlePrevStep = () => setStep((prev) => prev - 1);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formData.komitmen) return;
-
-    setIsLoading(true);
-    setErrorMsg(null);
-    try {
-      const response = await fetch('/api/submit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ formType: 'daftar', ...formData }),
-      });
-
-      if (response.ok) {
-        setSubmitted(true);
-      } else {
-        setErrorMsg('Gagal mengirim pendaftaran. Pastikan koneksi internet stabil, atau coba lagi dalam beberapa saat.');
-      }
-    } catch (err) {
-      console.error(err);
-      setErrorMsg('Terjadi kesalahan jaringan saat mengirim data. Silakan coba lagi.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const inputClass = cn(
-    'w-full bg-[#060606] border border-white/8 rounded-lg px-4 py-3.5 text-[13px] text-white outline-none transition-colors duration-200',
-    'focus-visible:border-[#D4AF37] focus-visible:ring-2 focus-visible:ring-[#D4AF37]/40'
-  );
-  const labelClass = 'block text-[11px] font-bold text-[#B4B4BD] tracking-[0.08em] uppercase mb-2';
-
-  const StepDot = ({ n, label }: { n: number; label: string }) => (
-    <div className="flex flex-col items-center z-[1]" aria-current={step === n ? 'step' : undefined}>
-      <span
-        className="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold transition-colors duration-300"
-        style={{
-          background: step >= n ? '#CC1111' : '#060606',
-          border: `1px solid ${step >= n ? '#CC1111' : 'rgba(255,255,255,0.1)'}`,
-          color: step >= n ? '#FFF' : '#8A8A94',
-        }}
-      >
-        {step > n ? '✓' : n}
-      </span>
-      <span
-        className="text-[9px] font-bold tracking-[0.05em] uppercase mt-2"
-        style={{ color: step >= n ? '#E8E6E0' : '#8A8A94' }}
-      >
-        {label}
-      </span>
+            <span
+              className={cn(
+                'text-[9px] font-bold tracking-[0.05em] uppercase mt-2 transition-colors duration-300',
+                isActive ? 'text-[#E8E6E0]' : 'text-[#A0A0AA]'
+              )}
+            >
+              {label}
+            </span>
+          </div>
+        );
+      })}
     </div>
+  );
+}
+
+/* ─── ErrorAlert ────────────────────────────────────────────────────────── */
+function ErrorAlert({ message }: { message: string }) {
+  return (
+    <div
+      role="alert"
+      className="mb-5 p-3.5 rounded-lg text-xs text-[#FFB3B3] leading-relaxed bg-[#C0392B]/8 border border-[#C0392B]/25 flex items-start gap-2.5"
+    >
+      <svg className="w-4 h-4 shrink-0 mt-0.5 text-[#FF6B6B]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+      </svg>
+      <span>{message}</span>
+    </div>
+  );
+}
+
+/* ─── SuccessScreen ─────────────────────────────────────────────────────── */
+function SuccessScreen({ formData }: { formData: FormData }) {
+  return (
+    <div className="text-center py-8 animate-fadeIn">
+      {/* Foto member tersenyum — bukan ikon abstrak */}
+      <div className="inline-flex items-center justify-center w-24 h-24 rounded-full overflow-hidden border-2 border-[#D4AF37]/30 mb-6 shadow-[0_0_30px_rgba(212,175,55,0.15)]">
+        <img
+          src="/arthur.JPG"
+          alt="Anggota komunitas tersenyum"
+          className="w-full h-full object-cover"
+        />
+      </div>
+
+      <h3 className="text-xl sm:text-2xl font-bold font-serif text-[#D4AF37] mb-3">
+        Senang Bertemu Kamu, {formData.nama.split(' ')[0]}!
+      </h3>
+      
+      <p className="text-[13px] sm:text-sm text-[#B8B8C0] leading-relaxed mb-5 max-w-md mx-auto">
+        Kami sudah menerima data kamu dengan aman. Tim fasilitator kami akan menghubungi kamu lewat{' '}
+        <strong className="text-[#E8E6E0]">WhatsApp ({formData.telp})</strong> dalam 1-2 hari ke depan untuk ngobrol santai dan mengundang kamu ke sesi perkenalan.
+      </p>
+
+      {/* Info box hangat */}
+      <div className="p-5 rounded-xl text-xs text-[#B8B8C0] leading-relaxed bg-[#D4AF37]/[0.04] border border-[#D4AF37]/20 max-w-md mx-auto">
+        <p className="mb-2 font-bold text-[#D4AF37] text-[11px] tracking-[0.08em] uppercase">
+          Sambil menunggu, kamu bisa:
+        </p>
+        <ul className="space-y-1.5 list-none p-0 text-left">
+          <li className="flex gap-2">
+            <span className="text-[#D4AF37]">☕</span>
+            <span>Datang langsung ke kedai kopi tempat kami biasa ngumpul — tanya saja di WhatsApp</span>
+          </li>
+          <li className="flex gap-2">
+            <span className="text-[#D4AF37]">📖</span>
+            <span>Baca cerita & arsip diskusi kami di halaman <a href="/arsip" className="text-[#D4AF37] underline hover:text-[#E8C547]">Arsip</a></span>
+          </li>
+          <li className="flex gap-2">
+            <span className="text-[#D4AF37]">💬</span>
+            <span>Kenalan dengan anggota lain lewat grup WhatsApp — link akan dikirim setelah verifikasi</span>
+          </li>
+        </ul>
+      </div>
+
+      {/* Pesan penutup */}
+      <p className="text-[11px] text-[#A0A0AA] mt-5 italic">
+        Kami sudah menyiapkan tempat duduk dan kopi hangat untukmu. Sampai jumpa! 🎉
+      </p>
+    </div>
+  );
+}
+
+/* ─── FormInput ─────────────────────────────────────────────────────────── */
+function FormInput({
+  label,
+  id,
+  name,
+  type = 'text',
+  value,
+  onChange,
+  placeholder,
+  required = false,
+  isTextarea = false,
+  rows = 4,
+}: {
+  label: string;
+  id: string;
+  name: string;
+  type?: string;
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+  placeholder: string;
+  required?: boolean;
+  isTextarea?: boolean;
+  rows?: number;
+}) {
+  const baseInputClass = cn(
+    'w-full bg-[#0A0806] border border-white/8 rounded-xl px-4 py-3.5 text-[13px] text-[#E8E6E0] placeholder:text-[#787886] outline-none transition-all duration-300',
+    'hover:border-white/15',
+    'focus:border-[#D4AF37] focus:ring-2 focus:ring-[#D4AF37]/25 focus:bg-[#0F0D0A]'
   );
 
   return (
-    <section className="relative z-10 px-5 py-12 sm:px-6 sm:py-16 max-w-[700px] mx-auto" aria-label="Formulir Bergabung">
+    <div>
+      <label
+        htmlFor={id}
+        className="block text-[11px] font-bold text-[#B8B8C0] tracking-[0.06em] uppercase mb-2"
+      >
+        {label}
+        {required && <span className="text-[#C0392B] ml-1" aria-hidden="true">*</span>}
+      </label>
+
+      {isTextarea ? (
+        <textarea
+          id={id}
+          name={name}
+          value={value}
+          onChange={onChange}
+          placeholder={placeholder}
+          rows={rows}
+          className={cn(baseInputClass, 'resize-y min-h-[100px]')}
+          aria-required={required}
+        />
+      ) : (
+        <input
+          type={type}
+          id={id}
+          name={name}
+          value={value}
+          onChange={onChange}
+          placeholder={placeholder}
+          required={required}
+          className={baseInputClass}
+          aria-required={required}
+        />
+      )}
+    </div>
+  );
+}
+
+/* ─── KOMPONEN UTAMA ────────────────────────────────────────────────────── */
+export default function DaftarPage() {
+  const [step, setStep] = useState(1);
+  const [formData, setFormData] = useState<FormData>(INITIAL_FORM_DATA);
+  const [submitted, setSubmitted] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const liveRegionRef = useRef<HTMLDivElement>(null);
+  const isSubmittingRef = useRef(false);
+
+  const handleInputChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      const { name, value } = e.target;
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    },
+    []
+  );
+
+  const handleCheckboxChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const { name, checked } = e.target;
+      setFormData((prev) => ({ ...prev, [name]: checked }));
+    },
+    []
+  );
+
+  const step1Valid = !!(formData.nama.trim() && formData.email.trim() && formData.telp.trim());
+
+  const handleNextStep = useCallback(() => {
+    if (step === 1 && !step1Valid) {
+      setErrorMsg('Lengkapi nama, email, dan nomor WhatsApp dulu ya. Biar kami bisa kenalan dengan kamu!');
+      return;
+    }
+    setErrorMsg(null);
+    setStep((prev) => Math.min(prev + 1, 3));
+  }, [step, step1Valid]);
+
+  const handlePrevStep = useCallback(() => {
+    setErrorMsg(null);
+    setStep((prev) => Math.max(prev - 1, 1));
+  }, []);
+
+  const handleSubmit = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+
+      if (!formData.komitmen) {
+        setErrorMsg('Centang dulu komitmennya ya. Ini penting buat menjaga ruang aman kita bersama.');
+        return;
+      }
+
+      if (isSubmittingRef.current) return;
+      isSubmittingRef.current = true;
+
+      setIsLoading(true);
+      setErrorMsg(null);
+
+      try {
+        const response = await fetch('/api/submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ formType: 'daftar', ...formData }),
+        });
+
+        if (response.ok) {
+          setSubmitted(true);
+          if (liveRegionRef.current) {
+            liveRegionRef.current.textContent = 'Pendaftaran berhasil! Kami akan menghubungi kamu segera.';
+          }
+        } else {
+          setErrorMsg('Waduh, gagal kirim nih. Coba periksa koneksi internet kamu, atau ulangi beberapa saat lagi.');
+        }
+      } catch (err) {
+        console.error('Submit error:', err);
+        setErrorMsg('Ada gangguan jaringan. Jangan khawatir — coba lagi sebentar ya.');
+      } finally {
+        setIsLoading(false);
+        isSubmittingRef.current = false;
+      }
+    },
+    [formData]
+  );
+
+  return (
+    <main className="relative z-10 px-5 py-12 sm:px-6 sm:py-16 max-w-[720px] mx-auto" aria-label="Formulir Bergabung">
+      {/* Hero Header — bahasa lebih hangat */}
       <PageHero
-        label="Komitmen Bersama"
-        title="Formulir"
-        highlight="Bergabung"
-        description="Proses pendaftaran anggota Benang Merah Community Manado. Isi formulir dengan jujur dan tulus."
+        label="Gabung Yuk"
+        title="Jadi Bagian dari"
+        highlight="Benang Merah"
+        description="Ngobrol santai dulu, isi data singkat, dan kami akan menghubungimu untuk kenalan. Tanpa biaya, tanpa formalitas berlebihan."
       />
 
-      <div className="rounded-2xl p-6 sm:p-9" style={{ background: '#0D0D0D', border: '1px solid rgba(255,255,255,0.04)' }}>
-        {/* Live region untuk screen reader — mengumumkan status submit tanpa alert() */}
-        <div ref={liveRegionRef} aria-live="polite" className="sr-only">
-          {isLoading ? 'Sedang mengirim formulir...' : submitted ? 'Pendaftaran berhasil dikirim.' : errorMsg ?? ''}
-        </div>
+      {/* Container utama */}
+      <div className="rounded-2xl p-6 sm:p-9 bg-[#100E0C] border border-white/5 shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
+        {/* Live region untuk screen reader */}
+        <div ref={liveRegionRef} aria-live="polite" aria-atomic="true" className="sr-only" />
 
-        {submitted ? (
-          <div className="text-center py-6" style={{ animation: 'fadeIn 0.6s' }}>
-            <span className="text-5xl block mb-5" aria-hidden="true">🎉</span>
-            <h3 className="text-xl font-bold font-serif text-[#D4AF37] mb-3">Selamat Bergabung!</h3>
-            <p className="text-[13px] text-[#9A9AA5] leading-[1.8] mb-6">
-              Data pendaftaran atas nama <strong>{formData.nama}</strong> telah kami terima secara aman di dalam sistem arsip. Fasilitator dari Tim <strong>PELUK</strong> akan menghubungi Anda via WhatsApp ({formData.telp}) dalam waktu maksimal 2x24 jam untuk mengirimkan undangan perjumpaan perdana.
-            </p>
-            <div className="p-4 rounded-xl text-xs text-[#B4B4BD] leading-[1.6]" style={{ background: 'rgba(204,17,17,0.05)', border: '1px solid rgba(204,17,17,0.15)' }}>
-              Sampai bertemu di sesi <strong>TENUN</strong> minggu depan! Persiapkan diri Anda untuk perjumpaan dan dialog yang hangat.
+        {/* Foto anggota di atas form — biar langsung terasa manusiawi */}
+        {!submitted && (
+          <div className="flex items-center gap-4 mb-7 p-4 rounded-xl bg-[#0A0806] border border-white/5">
+            <div className="w-12 h-12 rounded-full overflow-hidden border border-[#D4AF37]/20 shrink-0">
+              <img src="/arthur.JPG" alt="Anggota tersenyum" className="w-full h-full object-cover" />
+            </div>
+            <div>
+              <p className="text-[12px] text-[#E8E6E0] italic leading-relaxed">
+                &ldquo;Dulu saya juga isi form ini. Sekarang BMC jadi rumah kedua. Santai aja — kami ramah kok!&rdquo;
+              </p>
+              <p className="text-[10px] text-[#A0A0AA] mt-1">— Arthur, anggota sejak 2023</p>
             </div>
           </div>
+        )}
+
+        {submitted ? (
+          <SuccessScreen formData={formData} />
         ) : (
           <form onSubmit={handleSubmit} noValidate>
-            {/* Step indicator */}
-            <div className="flex justify-between mb-9 sm:mb-10 relative" role="list" aria-label="Tahapan formulir">
-              <div className="absolute top-3.5 left-[10%] right-[10%] h-px z-0" style={{ background: 'rgba(255,255,255,0.05)' }} />
-              <StepDot n={1} label="Identitas" />
-              <StepDot n={2} label="Eksplorasi" />
-              <StepDot n={3} label="Komitmen" />
-            </div>
+            <StepIndicator currentStep={step} />
 
-            {/* Pesan error inline — menggantikan alert() */}
-            {errorMsg && (
-              <div
-                role="alert"
-                className="mb-5 p-3.5 rounded-lg text-xs text-[#FF8A8A] leading-relaxed"
-                style={{ background: 'rgba(204,17,17,0.08)', border: '1px solid rgba(204,17,17,0.25)' }}
-              >
-                {errorMsg}
-              </div>
-            )}
+            {errorMsg && <ErrorAlert message={errorMsg} />}
 
+            {/* ─── STEP 1: Perkenalan ─────────────────────────────────── */}
             {step === 1 && (
-              <div className="flex flex-col gap-5">
-                <div>
-                  <label htmlFor="nama" className={labelClass}>Nama Lengkap</label>
-                  <input
-                    type="text" id="nama" name="nama" value={formData.nama} onChange={handleInputChange}
-                    placeholder="Contoh: Rionaldo Lombone" required className={inputClass}
-                    aria-required="true"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="email" className={labelClass}>Alamat Email</label>
-                  <input
-                    type="email" id="email" name="email" value={formData.email} onChange={handleInputChange}
-                    placeholder="nama@email.com" required className={inputClass}
-                    aria-required="true"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="telp" className={labelClass}>Nomor WhatsApp</label>
-                  <input
-                    type="tel" id="telp" name="telp" value={formData.telp} onChange={handleInputChange}
-                    placeholder="Contoh: 081234567890" required className={inputClass}
-                    aria-required="true"
-                  />
-                </div>
+              <fieldset className="flex flex-col gap-5 border-none p-0">
+                <legend className="sr-only">Perkenalan Diri</legend>
+
+                <p className="text-[12px] text-[#B8B8C0] leading-relaxed -mb-1">
+                  Hai! Kenalan dulu yuk. Data ini cuma buat kami bisa hubungi kamu — bukan buat disebar.
+                </p>
+
+                <FormInput
+                  label="Nama Lengkap"
+                  id="nama"
+                  name="nama"
+                  value={formData.nama}
+                  onChange={handleInputChange}
+                  placeholder="Nama panggilan juga boleh"
+                  required
+                />
+                <FormInput
+                  label="Alamat Email"
+                  id="email"
+                  name="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  placeholder="nama@email.com"
+                  required
+                />
+                <FormInput
+                  label="Nomor WhatsApp"
+                  id="telp"
+                  name="telp"
+                  type="tel"
+                  value={formData.telp}
+                  onChange={handleInputChange}
+                  placeholder="0812-3456-7890"
+                  required
+                />
+
                 <div className="flex justify-end mt-3">
                   <BmcButton type="button" onClick={handleNextStep} disabled={!step1Valid} aria-disabled={!step1Valid}>
-                    Selanjutnya &rarr;
+                    Lanjut Cerita →
                   </BmcButton>
                 </div>
-              </div>
+              </fieldset>
             )}
 
+            {/* ─── STEP 2: Cerita Kamu ────────────────────────────────── */}
             {step === 2 && (
-              <div className="flex flex-col gap-5">
-                <div>
-                  <label htmlFor="asal" className={labelClass}>Asal / Domisili di Sulawesi Utara</label>
-                  <input
-                    type="text" id="asal" name="asal" value={formData.asal} onChange={handleInputChange}
-                    placeholder="Contoh: Tikala, Manado / Kakaskasen, Tomohon" className={inputClass}
-                  />
-                </div>
-                <div>
-                  <label htmlFor="kesibukan" className={labelClass}>Kesibukan Saat Ini</label>
-                  <input
-                    type="text" id="kesibukan" name="kesibukan" value={formData.kesibukan} onChange={handleInputChange}
-                    placeholder="Contoh: Mahasiswa Unsrat / Pekerja Kreatif Lepas" className={inputClass}
-                  />
-                </div>
-                <div>
-                  <label htmlFor="alasan" className={labelClass}>Mengapa Tertarik Bergabung di BMC?</label>
-                  <textarea
-                    id="alasan" name="alasan" value={formData.alasan} onChange={handleInputChange}
-                    placeholder="Bagikan pemikiran, keresahan, atau apa yang ingin Anda eksplorasi bersama kami..."
-                    rows={4} className={cn(inputClass, 'resize-y')}
-                  />
-                </div>
+              <fieldset className="flex flex-col gap-5 border-none p-0">
+                <legend className="sr-only">Cerita Kamu</legend>
+
+                <p className="text-[12px] text-[#B8B8C0] leading-relaxed -mb-1">
+                  Ceritain sedikit tentang kamu. Gak perlu formal — isi aja sejujurnya.
+                </p>
+
+                <FormInput
+                  label="Asal / Domisili"
+                  id="asal"
+                  name="asal"
+                  value={formData.asal}
+                  onChange={handleInputChange}
+                  placeholder="Contoh: Tikala, Manado / Kakaskasen, Tomohon"
+                />
+                <FormInput
+                  label="Kesibukan Saat Ini"
+                  id="kesibukan"
+                  name="kesibukan"
+                  value={formData.kesibukan}
+                  onChange={handleInputChange}
+                  placeholder="Mahasiswa / Bekerja / Freelance / Masih cari arah"
+                />
+                <FormInput
+                  label="Kenapa Tertarik Gabung BMC?"
+                  id="alasan"
+                  name="alasan"
+                  value={formData.alasan}
+                  onChange={handleInputChange}
+                  placeholder="Ceritain keresahan, harapan, atau apa pun yang bikin kamu klik halaman ini..."
+                  isTextarea
+                  rows={4}
+                />
+
                 <div className="flex justify-between mt-3 gap-3">
                   <BmcButton type="button" variant="ghost" onClick={handlePrevStep}>
-                    &larr; Kembali
+                    ← Kembali
                   </BmcButton>
                   <BmcButton type="button" onClick={handleNextStep}>
-                    Selanjutnya &rarr;
+                    Lanjut Komitmen →
                   </BmcButton>
                 </div>
-              </div>
+              </fieldset>
             )}
 
+            {/* ─── STEP 3: Komitmen ──────────────────────────────────── */}
             {step === 3 && (
-              <div className="flex flex-col gap-6">
-                <div className="p-5 sm:p-6 rounded-xl" style={{ background: 'rgba(204,17,17,0.03)', border: '1px solid rgba(204,17,17,0.15)' }}>
-                  <h4 className="text-xs font-bold text-[#FF5555] tracking-[0.08em] uppercase mb-3">Piagam Komitmen Anggota</h4>
-                  <p className="text-xs text-[#9A9AA5] leading-[1.7] mb-2.5">1. <strong>Saling Menghargai Ruang Aman:</strong> Berkomitmen menjaga relasi yang tulus, tidak memaksakan dogma, dan tidak menghakimi latar belakang anggota lain.</p>
-                  <p className="text-xs text-[#9A9AA5] leading-[1.7] mb-2.5">2. <strong>Kehadiran Aktif:</strong> Berusaha meluangkan waktu secara tulus untuk hadir di dalam diskusi bulanan (TENUN/ANYAMAN) demi kelangsungan relasi komunitas.</p>
-                  <p className="text-xs text-[#9A9AA5] leading-[1.7]">3. <strong>Kolaborasi Kreatif:</strong> Siap bahu-membahu dalam merajut karya nyata demi perdamaian yang inklusif di Sulawesi Utara.</p>
+              <fieldset className="flex flex-col gap-6 border-none p-0">
+                <legend className="sr-only">Piagam Komitmen</legend>
+
+                <p className="text-[12px] text-[#B8B8C0] leading-relaxed">
+                  Sebelum gabung, baca dulu komitmen kita. Ini penting buat jaga ruang aman bersama. Tenang — bukan kontrak legal, cuma kesepakatan hati.
+                </p>
+
+                {/* Piagam Card — lebih hangat */}
+                <div className="p-5 sm:p-6 rounded-xl bg-[#C0392B]/[0.03] border border-[#C0392B]/15">
+                  <h4 className="text-xs font-bold text-[#FF6B6B] tracking-[0.06em] uppercase mb-3 flex items-center gap-2">
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                    </svg>
+                    Yang Kami Percaya Bersama
+                  </h4>
+                  <ul className="space-y-3 list-none p-0">
+                    {[
+                      {
+                        title: 'Saling Jaga Ruang Aman',
+                        desc: 'Kami setuju untuk tidak menghakimi, tidak memaksakan keyakinan, dan mendengarkan dengan hati terbuka.',
+                      },
+                      {
+                        title: 'Hadir dengan Tulus',
+                        desc: 'Kami berusaha meluangkan waktu untuk ngumpul rutin — karena persaudaraan butuh ketemu, bukan cuma chat.',
+                      },
+                      {
+                        title: 'Berkarya Bareng',
+                        desc: 'Kami percaya bahwa dialog yang sehat bisa melahirkan karya nyata untuk Manado dan sekitarnya.',
+                      },
+                    ].map((item, i) => (
+                      <li key={i} className="flex gap-3 text-xs text-[#B8B8C0] leading-relaxed">
+                        <span className="text-[#D4AF37] font-bold shrink-0 mt-0.5">{i + 1}.</span>
+                        <span>
+                          <strong className="text-[#E8E6E0]">{item.title}:</strong>{' '}
+                          {item.desc}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
 
+                {/* Checkbox Komitmen — bahasa lebih cair */}
                 <div className="flex items-start gap-3">
                   <input
-                    type="checkbox" id="komitmen" name="komitmen" checked={formData.komitmen} onChange={handleCheckboxChange}
-                    className="mt-0.5 cursor-pointer w-4 h-4 accent-[#CC1111] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0D0D]"
+                    type="checkbox"
+                    id="komitmen"
+                    name="komitmen"
+                    checked={formData.komitmen}
+                    onChange={handleCheckboxChange}
+                    className="mt-0.5 cursor-pointer w-4 h-4 rounded accent-[#C0392B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37] focus-visible:ring-offset-2 focus-visible:ring-offset-[#100E0C]"
                     required
+                    aria-required="true"
                   />
-                  <label htmlFor="komitmen" className="text-xs text-[#B4B4BD] leading-[1.6] cursor-pointer">
-                    Saya memahami dan dengan tulus menyetujui seluruh Piagam Komitmen Anggota Benang Merah Community Manado demi menjaga kualitas ruang aman bersama.
+                  <label htmlFor="komitmen" className="text-xs text-[#B8B8C0] leading-relaxed cursor-pointer select-none">
+                    Saya setuju dan siap ikut menjaga ruang aman ini bersama teman-teman di Benang Merah Community.
                   </label>
                 </div>
 
                 <div className="flex justify-between mt-3 gap-3">
                   <BmcButton type="button" variant="ghost" onClick={handlePrevStep} disabled={isLoading}>
-                    &larr; Kembali
+                    ← Kembali
                   </BmcButton>
                   <BmcButton
                     type="submit"
                     disabled={!formData.komitmen || isLoading}
                     aria-disabled={!formData.komitmen || isLoading}
+                    aria-busy={isLoading}
                   >
-                    {isLoading ? <LoadingSpinner /> : 'Kirim Pendaftaran ✓'}
+                    {isLoading ? (
+                      <span className="flex items-center gap-2">
+                        <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                        </svg>
+                        Mengirim...
+                      </span>
+                    ) : (
+                      'Gabung Sekarang 🎉'
+                    )}
                   </BmcButton>
                 </div>
-              </div>
+              </fieldset>
             )}
           </form>
         )}
       </div>
-    </section>
+    </main>
   );
 }
+
 
 ============================================================
 FILE: app\dinding\layout.tsx
@@ -523,13 +945,89 @@ FILE: app\dinding\page.tsx
 // app/dinding/page.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { SAMPLE_THREADS, THREAD_COLOR, ThreadItem } from '@/constants/threadsData';
-import { SectionLabel, LoadingSpinner } from '@/components/ui/SharedComponents';
+import { SectionLabel } from '@/components/ui/SharedComponents';
+import { cn } from '@/lib/utils';
 
+/* ─── Constants ─── */
 const STORAGE_KEY = 'bmc_threads_local';
 const COLORS: Array<'red' | 'gold' | 'rose'> = ['red', 'gold', 'rose'];
+const MAX_CHAR = 180;
 
+/* ────────────────────────────────────────────────────────────────────────── */
+/*  SUB-KOMPONEN: ThreadCard (kartu helai benang)                            */
+/* ────────────────────────────────────────────────────────────────────────── */
+function ThreadCard({ thread }: { thread: ThreadItem }) {
+  const c = THREAD_COLOR[thread.color] || THREAD_COLOR.red;
+
+  return (
+    <article
+      className={cn(
+        'break-inside-avoid mb-4 rounded-xl p-5 sm:p-6 transition-all duration-300',
+        'hover:shadow-[0_8px_24px_rgba(0,0,0,0.3)] hover:-translate-y-0.5',
+        'animate-fadeIn'
+      )}
+      style={{
+        background: c.bg,
+        border: `1px solid ${c.border}`,
+        borderLeft: `3px solid ${c.accent}`,
+      }}
+    >
+      {/* Pesan */}
+      <blockquote className="text-sm sm:text-[14px] text-[#E8E6E0] leading-relaxed italic mb-4 font-serif">
+        &ldquo;{thread.pesan}&rdquo;
+      </blockquote>
+
+      {/* Footer: penulis + indikator warna */}
+      <div className="flex items-center gap-2.5">
+        <span
+          className="w-2 h-2 rounded-full shrink-0"
+          style={{ background: c.accent }}
+          aria-hidden="true"
+        />
+        <span
+          className="text-[11px] sm:text-xs font-bold tracking-wide"
+          style={{ color: c.accent }}
+        >
+          {thread.nama}
+        </span>
+      </div>
+    </article>
+  );
+}
+
+/* ────────────────────────────────────────────────────────────────────────── */
+/*  SUB-KOMPONEN: CharacterCounter                                        */
+/* ────────────────────────────────────────────────────────────────────────── */
+function CharacterCounter({ current, max }: { current: number; max: number }) {
+  const isNearLimit = current > max * 0.85;
+  const isAtLimit = current >= max;
+
+  return (
+    <div className="flex justify-between items-center mt-1.5">
+      <span className="text-[10px] text-[#8A8A94]">
+        {current === 0 ? 'Tulis minimal 1 karakter' : ''}
+      </span>
+      <span
+        className={cn(
+          'text-[10px] font-medium tabular-nums transition-colors duration-200',
+          isAtLimit
+            ? 'text-[#FF5555]'
+            : isNearLimit
+            ? 'text-[#D4AF37]'
+            : 'text-[#8A8A94]'
+        )}
+      >
+        {current}/{max}
+      </span>
+    </div>
+  );
+}
+
+/* ────────────────────────────────────────────────────────────────────────── */
+/*  KOMPONEN UTAMA                                                           */
+/* ────────────────────────────────────────────────────────────────────────── */
 export default function DindingPage() {
   const [threads, setThreads] = useState<ThreadItem[]>(SAMPLE_THREADS);
   const [pesan, setPesan] = useState('');
@@ -537,102 +1035,152 @@ export default function DindingPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [justSent, setJustSent] = useState(false);
 
-  // Muat kiriman lokal (localStorage) lalu gabung dengan data contoh
+  // Ref untuk auto-focus kembali ke textarea setelah kirim
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Ref untuk mencegah double-submit
+  const isSubmittingRef = useRef(false);
+
+  /* ─── Load local threads dari localStorage ─── */
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
         const local: ThreadItem[] = JSON.parse(raw);
-        setThreads([...local, ...SAMPLE_THREADS]);
+        setThreads((prev) => [...local, ...prev]);
       }
     } catch {
-      // abaikan jika localStorage tidak tersedia
+      // Silent fail jika localStorage tidak tersedia
     }
   }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!pesan.trim()) return;
+  /* ─── Handler submit dengan anti double-submit ─── */
+  const handleSubmit = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
 
-    setIsLoading(true);
+      const trimmedPesan = pesan.trim();
+      if (!trimmedPesan) return;
+      if (isSubmittingRef.current) return;
 
-    const newThread: ThreadItem = {
-      id: `local_${Date.now()}`,
-      pesan: pesan.trim(),
-      nama: nama.trim() || 'Anonim',
-      color: COLORS[Math.floor(Math.random() * COLORS.length)],
-    };
+      isSubmittingRef.current = true;
+      setIsLoading(true);
 
-    // 1) Kirim ke Spreadsheet (pola sama seperti form daftar/saran)
-    try {
-      await fetch('/api/submit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          formType: 'thread',
-          nama: newThread.nama,
-          pesan: newThread.pesan,
-          color: newThread.color,
-        }),
-      });
-    } catch (err) {
-      // Walau gagal kirim ke server, helai tetap tampil lokal agar pengalaman mulus
-      console.error('Gagal mengirim thread ke server:', err);
-    }
+      const newThread: ThreadItem = {
+        id: `local_${Date.now()}`,
+        pesan: trimmedPesan,
+        nama: nama.trim() || 'Anonim',
+        color: COLORS[Math.floor(Math.random() * COLORS.length)],
+      };
 
-    // 2) Simpan & tampilkan secara lokal
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      const local: ThreadItem[] = raw ? JSON.parse(raw) : [];
-      const updated = [newThread, ...local];
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-    } catch {
-      // abaikan
-    }
+      // Kirim ke server (best-effort, tidak blocking UX)
+      try {
+        await fetch('/api/submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            formType: 'thread',
+            nama: newThread.nama,
+            pesan: newThread.pesan,
+            color: newThread.color,
+          }),
+        });
+      } catch (err) {
+        console.error('Gagal mengirim thread ke server:', err);
+      }
 
-    setThreads((prev) => [newThread, ...prev]);
-    setPesan('');
-    setNama('');
-    setIsLoading(false);
-    setJustSent(true);
-    setTimeout(() => setJustSent(false), 4000);
-  };
+      // Simpan ke localStorage
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        const local: ThreadItem[] = raw ? JSON.parse(raw) : [];
+        const updated = [newThread, ...local].slice(0, 50); // Batasi 50 item lokal
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+      } catch {
+        // Silent fail
+      }
+
+      // Update state
+      setThreads((prev) => [newThread, ...prev]);
+      setPesan('');
+      setNama('');
+      setIsLoading(false);
+      isSubmittingRef.current = false;
+      setJustSent(true);
+
+      // Auto-focus kembali ke textarea
+      setTimeout(() => {
+        textareaRef.current?.focus();
+      }, 100);
+
+      // Clear success message setelah 4 detik
+      setTimeout(() => setJustSent(false), 4000);
+    },
+    [pesan, nama]
+  );
 
   return (
-    <section style={{ padding: '64px 24px', maxWidth: '1100px', margin: '0 auto', position: 'relative', zIndex: 10 }} aria-label="Dinding Benang">
-      <div style={{ textAlign: 'center', marginBottom: '48px' }}>
+    <main
+      className="relative z-10 px-5 py-12 sm:px-6 sm:py-16 md:py-20 max-w-[1100px] mx-auto"
+      aria-label="Dinding Benang"
+    >
+      {/* ─── HEADER ──────────────────────────────────────────────────── */}
+      <header className="text-center mb-12 sm:mb-14">
         <SectionLabel gold>Ruang Perjumpaan</SectionLabel>
-        <h1 style={{ fontSize: 'clamp(2rem, 4.5vw, 3.2rem)', fontWeight: 800, fontFamily: 'serif', marginBottom: '12px' }}>
-          Dinding <span style={{ color: '#CC1111' }}>Benang</span>
+        <h1 className="text-[2rem] sm:text-[2.5rem] md:text-[3.2rem] font-extrabold font-serif tracking-tight text-[#F5F5F5] mb-3">
+          Dinding{' '}
+          <span className="text-[#CC1111] [text-shadow:0_0_20px_rgba(204,17,17,0.3)]">
+            Benang
+          </span>
         </h1>
-        <p style={{ fontSize: '14px', color: '#B4B4BD', lineHeight: 1.7, maxWidth: '600px', margin: '0 auto' }}>
-          Tinggalkan satu helai benangmu, sepatah harapan, refleksi, atau sapaan. Setiap helai dirajut bersama menjadi anyaman persaudaraan kita.
+        <p className="text-sm sm:text-[14px] text-[#B4B4BD] leading-relaxed max-w-[600px] mx-auto">
+          Tinggalkan satu helai benangmu, sepatah harapan, refleksi, atau sapaan.
+          Setiap helai dirajut bersama menjadi anyaman persaudaraan kita.
         </p>
-      </div>
+      </header>
 
-      {/* Form helai benang */}
-      <div style={{ background: '#0D0D0D', border: '1px solid rgba(255,255,255,0.04)', borderRadius: '20px', padding: '32px', maxWidth: '640px', margin: '0 auto 56px' }}>
-        <form onSubmit={handleSubmit}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      {/* ─── FORM HELAI BENANG ───────────────────────────────────────── */}
+      <div className="bg-[#0D0D0D] border border-white/5 rounded-2xl p-6 sm:p-8 max-w-[640px] mx-auto mb-14 sm:mb-16 shadow-[0_8px_32px_rgba(0,0,0,0.3)]">
+        <form onSubmit={handleSubmit} noValidate>
+          <fieldset className="flex flex-col gap-5 border-none p-0" disabled={isLoading}>
+            <legend className="sr-only">Tulis helai benang baru</legend>
+
+            {/* Textarea Pesan */}
             <div>
-              <label htmlFor="pesan" style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#B4B4BD', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '8px' }}>
-                Helai Benangmu *
+              <label
+                htmlFor="pesan"
+                className="block text-[11px] font-bold text-[#B4B4BD] tracking-[0.08em] uppercase mb-2"
+              >
+                Helai Benangmu <span className="text-[#CC1111]" aria-hidden="true">*</span>
               </label>
               <textarea
+                ref={textareaRef}
                 id="pesan"
                 value={pesan}
                 onChange={(e) => setPesan(e.target.value)}
                 placeholder="Tuliskan harapan, refleksi, atau sapaan singkatmu..."
                 rows={3}
-                maxLength={180}
+                maxLength={MAX_CHAR}
                 required
-                style={{ width: '100%', background: '#060606', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', padding: '14px 16px', fontSize: '13px', color: '#FFF', outline: 'none', resize: 'vertical', lineHeight: 1.6 }}
+                aria-required="true"
+                className={cn(
+                  'w-full bg-[#060606] border border-white/10 rounded-xl px-4 py-3.5 text-[13px] text-[#E8E6E0] placeholder:text-[#8A8A94] outline-none resize-y leading-relaxed transition-all duration-300',
+                  'hover:border-white/20',
+                  'focus:border-[#D4AF37] focus:ring-2 focus:ring-[#D4AF37]/30 focus:bg-[#0A0A0A]'
+                )}
               />
-              <div style={{ textAlign: 'right', fontSize: '10px', color: '#8A8A94', marginTop: '4px' }}>{pesan.length}/180</div>
+              <CharacterCounter current={pesan.length} max={MAX_CHAR} />
             </div>
+
+            {/* Input Nama */}
             <div>
-              <label htmlFor="nama" style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#B4B4BD', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '8px' }}>
-                Nama (boleh dikosongkan untuk Anonim)
+              <label
+                htmlFor="nama"
+                className="block text-[11px] font-bold text-[#B4B4BD] tracking-[0.08em] uppercase mb-2"
+              >
+                Nama{' '}
+                <span className="text-[#8A8A94] font-normal normal-case tracking-normal">
+                  (boleh dikosongkan untuk Anonim)
+                </span>
               </label>
               <input
                 id="nama"
@@ -640,64 +1188,114 @@ export default function DindingPage() {
                 value={nama}
                 onChange={(e) => setNama(e.target.value)}
                 placeholder="Nama atau inisialmu"
-                style={{ width: '100%', background: '#060606', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', padding: '12px 16px', fontSize: '13px', color: '#FFF', outline: 'none' }}
+                className={cn(
+                  'w-full bg-[#060606] border border-white/10 rounded-xl px-4 py-3 text-[13px] text-[#E8E6E0] placeholder:text-[#8A8A94] outline-none transition-all duration-300',
+                  'hover:border-white/20',
+                  'focus:border-[#D4AF37] focus:ring-2 focus:ring-[#D4AF37]/30 focus:bg-[#0A0A0A]'
+                )}
               />
             </div>
+
+            {/* Submit Button */}
             <button
               type="submit"
               disabled={!pesan.trim() || isLoading}
-              style={{ background: '#CC1111', color: '#FFF', border: 'none', borderRadius: '100px', padding: '14px', fontSize: '11px', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', cursor: 'pointer', boxShadow: '0 0 20px rgba(204,17,17,0.3)', opacity: !pesan.trim() || isLoading ? 0.5 : 1, transition: 'all 0.3s ease' }}
+              aria-disabled={!pesan.trim() || isLoading}
+              aria-busy={isLoading}
+              className={cn(
+                'w-full rounded-full py-3.5 sm:py-4 text-[11px] font-bold tracking-[0.12em] uppercase transition-all duration-300',
+                'bg-[#CC1111] text-white shadow-[0_0_20px_rgba(204,17,17,0.3)]',
+                'hover:bg-[#AA0A0A] hover:shadow-[0_0_32px_rgba(204,17,17,0.45)]',
+                'active:scale-[0.98]',
+                'disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-[#CC1111] disabled:hover:shadow-[0_0_20px_rgba(204,17,17,0.3)] disabled:active:scale-100'
+              )}
             >
-              {isLoading ? <LoadingSpinner /> : 'Rajut Helai Benangku →'}
+              {isLoading ? (
+                <span className="inline-flex items-center justify-center gap-2">
+                  <svg
+                    className="animate-spin h-4 w-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                    />
+                  </svg>
+                  Merajut...
+                </span>
+              ) : (
+                'Rajut Helai Benangku →'
+              )}
             </button>
+
+            {/* Success feedback */}
             {justSent && (
-              <p style={{ textAlign: 'center', fontSize: '12px', color: '#D4AF37', animation: 'fadeIn 0.5s' }}>
-                Terima kasih, helaimu telah terajut di dinding ini. 🧵
+              <p
+                role="status"
+                className="text-center text-xs text-[#D4AF37] font-medium animate-fadeIn flex items-center justify-center gap-1.5"
+              >
+                <span aria-hidden="true">🧵</span>
+                Terima kasih, helaimu telah terajut di dinding ini.
               </p>
             )}
-          </div>
+          </fieldset>
         </form>
       </div>
 
-      {/* Anyaman helai */}
-      <div style={{ columnGap: '16px', columnWidth: '280px' }}>
-        {threads.map((t) => {
-          const c = THREAD_COLOR[t.color] || THREAD_COLOR.red;
-          return (
-            <div
-              key={t.id}
-              style={{
-                breakInside: 'avoid',
-                marginBottom: '16px',
-                background: c.bg,
-                border: `1px solid ${c.border}`,
-                borderLeft: `3px solid ${c.accent}`,
-                borderRadius: '12px',
-                padding: '20px 22px',
-                animation: 'fadeIn 0.6s',
-              }}
-            >
-              <p style={{ fontSize: '14px', color: '#E8E6E0', lineHeight: 1.7, fontStyle: 'italic', marginBottom: '14px', fontFamily: 'serif' }}>
-                &ldquo;{t.pesan}&rdquo;
-              </p>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: c.accent }} />
-                <span style={{ fontSize: '12px', fontWeight: 700, color: c.accent }}>{t.nama}</span>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </section>
+      {/* ─── ANYAMAN HELAI (Masonry Grid) ────────────────────────────── */}
+      {threads.length === 0 ? (
+        <div className="text-center py-12">
+          <span className="text-4xl opacity-30 block mb-3" aria-hidden="true">🧵</span>
+          <p className="text-[#9A9AA5] text-sm">Belum ada helai benang. Jadilah yang pertama merajut!</p>
+        </div>
+      ) : (
+        <>
+          <p className="text-xs text-[#8A8A94] mb-6 font-medium tracking-wide uppercase text-center sm:text-left">
+            <span className="text-[#D4AF37] font-bold">{threads.length}</span> helai telah terajut
+          </p>
+
+          {/* Masonry layout menggunakan CSS columns */}
+          <div
+            className="gap-4 sm:gap-5"
+            style={{
+              columnCount: 1,
+            }}
+            className="
+              columns-1
+              sm:columns-2
+              lg:columns-3
+              gap-4
+              sm:gap-5
+            "
+          >
+            {threads.map((t) => (
+              <ThreadCard key={t.id} thread={t} />
+            ))}
+          </div>
+        </>
+      )}
+    </main>
   );
 }
+
 
 ============================================================
 FILE: app\globals.css
 ============================================================
 /* ==========================================================================
-   BMC Design System — Global Stylesheet
-   Palet: Hitam Dalam #060606 | Merah Prestige #CC1111 | Emas #D4AF37 | Putih Ivory #F5F5F5
+   BMC Design System — Global Stylesheet (WARM DARK EDITION)
+   Palet: Hitam Hangat #0C0A08 | Merah Bata #C0392B | Emas #D4AF37 | Ivory #F5F5F5
    ========================================================================== */
 
 /* ─── 1. Impor Dependensi ─────────────────────────────────────────────────── */
@@ -708,12 +1306,36 @@ FILE: app\globals.css
 /* ─── 2. Varian Kustom ────────────────────────────────────────────────────── */
 @custom-variant dark (&:is(.dark *));
 
-/* ─── 3. Token Warna BMC ──────────────────────────────────────────────────── */
+/* ─── 3. Token Warna BMC — WARM EDITION ───────────────────────────────────── */
 @theme {
-  --color-bmc-red:   #CC1111;
-  --color-bmc-black: #0A0A0A;
-  --color-bmc-white: #F5F5F5;
-  --color-bmc-gold:  #D4AF37;
+  /* Primary Brand */
+  --color-bmc-red:        #C0392B;  /* Brick red — hangat, manusiawi */
+  --color-bmc-red-hover:  #A93226;  /* Hover state */
+  --color-bmc-black:      #0C0A08;  /* Warm black — ada hint coklat */
+  --color-bmc-white:      #F5F5F5;  /* Ivory white */
+  --color-bmc-gold:       #D4AF37;  /* Gold */
+  --color-bmc-gold-hover: #E8C547;  /* Gold hover */
+
+  /* Background Hierarchy */
+  --color-bmc-bg-primary:    #100E0C;  /* Container utama */
+  --color-bmc-bg-secondary:  #0A0806;  /* Input fields */
+  --color-bmc-bg-tertiary:   #141210;  /* Hover surface */
+
+  /* Text Hierarchy */
+  --color-bmc-text-primary:      #F5F5F5;  /* Headline */
+  --color-bmc-text-secondary:    #E8E6E0;  /* Body text */
+  --color-bmc-text-muted:        #B8B8C0;  /* Description, labels (dinaikkan) */
+  --color-bmc-text-placeholder:  #787886;  /* Placeholder (4.6:1) */
+  --color-bmc-text-disabled:     #5A5A66;  /* Disabled text */
+
+  /* Border Hierarchy */
+  --color-bmc-border-default:  rgba(255, 255, 255, 0.08);
+  --color-bmc-border-hover:    rgba(255, 255, 255, 0.15);
+  --color-bmc-border-active:   rgba(212, 175, 55, 0.40);
+
+  /* Accent */
+  --color-bmc-rose:      #FF6B6B;  /* Warning, error */
+  --color-bmc-terracotta: #D3544D; /* Variasi hangat */
 }
 
 /* ─── 4. Scrollbar Gelap Mewah ────────────────────────────────────────────── */
@@ -722,53 +1344,63 @@ FILE: app\globals.css
 }
 
 ::-webkit-scrollbar-track {
-  background: #060606;
+  background: #0A0806;
 }
 
 ::-webkit-scrollbar-thumb {
   background:    #1F1F1F;
   border-radius: 99px;
-  border:        1px solid #060606;
+  border:        1px solid #0A0806;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #CC1111;
+  background: #C0392B;
 }
 
 /* ─── 5. Pengaturan Dasar HTML & Body ─────────────────────────────────────── */
 html {
   scroll-behavior: smooth;
-  background-color: #060606;
+  background-color: #0C0A08;
 }
 
 body {
   color:            #F5F5F5;
   overflow-x:       hidden;
 
-  /* Latar global: Bara Perapian + Anyaman (versi lembut) */
-  background-color: #060606;
+  /* Latar global: Bara Perapian + Grain Organik (versi minimalis hangat) */
+  background-color: #0C0A08;
   background-image:
-    radial-gradient(ellipse 70% 55% at 12% 6%, rgba(204,17,17,0.12), transparent 62%),
-    radial-gradient(ellipse 65% 55% at 88% 94%, rgba(212,175,55,0.08), transparent 62%),
-    radial-gradient(ellipse 90% 60% at 50% 50%, rgba(20,12,14,0.45), transparent 70%),
-    repeating-linear-gradient(45deg, rgba(255,255,255,0.010) 0px, rgba(255,255,255,0.010) 1px, transparent 1px, transparent 9px),
-    repeating-linear-gradient(-45deg, rgba(255,255,255,0.009) 0px, rgba(255,255,255,0.009) 1px, transparent 1px, transparent 9px);
+    /* Bara perapian — merah redup di atas */
+    radial-gradient(ellipse 70% 55% at 12% 6%, rgba(192,57,43,0.10), transparent 62%),
+    /* Emas hangat di bawah */
+    radial-gradient(ellipse 65% 55% at 88% 94%, rgba(212,175,55,0.06), transparent 62%),
+    /* Ambient warmth di tengah */
+    radial-gradient(ellipse 90% 60% at 50% 50%, rgba(20,12,14,0.35), transparent 70%),
+    /* Grain texture organik (seperti kertas daur ulang) */
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.025'/%3E%3C/svg%3E");
   background-attachment: fixed;
   background-repeat: no-repeat;
 }
 
-/* ─── 6. Efek Pendaran (Glow Effects) ─────────────────────────────────────── */
+/* ─── 6. Efek Pendaran (Glow Effects) — Lebih Hangat ─────────────────────── */
 .shadow-glow-red {
-  box-shadow: 0 0 30px rgba(204, 17, 17, 0.25);
+  box-shadow: 0 0 30px rgba(192, 57, 43, 0.25);
 }
 
 .shadow-glow-gold {
   box-shadow: 0 0 30px rgba(212, 175, 55, 0.20);
 }
 
+.shadow-glow-warm {
+  box-shadow: 
+    0 0 40px rgba(212, 175, 55, 0.15),
+    0 0 80px rgba(180, 100, 30, 0.08),
+    0 0 120px rgba(200, 80, 20, 0.04);
+}
+
 .shadow-glow-combined {
   box-shadow:
-    0 0 40px rgba(204, 17, 17, 0.15),
+    0 0 40px rgba(192, 57, 43, 0.15),
     0 0 40px rgba(212, 175, 55, 0.10);
 }
 
@@ -801,12 +1433,22 @@ body {
   animation: float 6s ease-in-out infinite;
 }
 
-/* 7c. Transisi Premium */
+/* 7c. Warm Pulse — seperti detak jantung */
+@keyframes warmPulse {
+  0%, 100% { box-shadow: 0 0 20px rgba(192,57,43,0.3); }
+  50%      { box-shadow: 0 0 35px rgba(192,57,43,0.5), 0 0 60px rgba(212,175,55,0.2); }
+}
+
+.animate-warm-pulse {
+  animation: warmPulse 3s ease-in-out infinite;
+}
+
+/* 7d. Transisi Premium */
 .transition-premium {
   transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* 7d. Kilau benang menyapu (shine sweep) saat hover */
+/* 7e. Kilau benang menyapu (shine sweep) saat hover */
 .bmc-shine {
   position: relative;
   overflow: hidden;
@@ -832,7 +1474,7 @@ body {
   left: 130%;
 }
 
-/* 7e. Animasi global (dipindah dari layout.tsx agar tidak inject <style> di setiap render) */
+/* 7f. Animasi global */
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50%      { opacity: 0.4; }
@@ -994,7 +1636,6 @@ body {
   }
 
   body {
-    /* Hanya warna teks di sini; latar diatur di bagian 5 agar gradasi tidak tertimpa */
     @apply text-[#F5F5F5];
   }
 
@@ -1002,6 +1643,42 @@ body {
     @apply font-sans;
   }
 }
+
+/* ─── 12. Utility Placeholder ────────────────────────────────────────────── */
+@utility placeholder-bmc {
+  &::placeholder {
+    color: var(--color-bmc-text-placeholder);
+    opacity: 1;
+  }
+}
+
+/* ─── 13. Focus Ring Custom BMC ───────────────────────────────────────────── */
+@utility focus-ring-bmc {
+  &:focus-visible {
+    outline: none;
+    border-color: var(--color-bmc-gold);
+    box-shadow: 0 0 0 2px var(--color-bmc-border-active);
+  }
+}
+
+/* ─── 14. Animasi Fade In Up ──────────────────────────────────────────────── */
+@utility animate-fadeInUp {
+  animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* ─── 15. Shadow BMC ──────────────────────────────────────────────────────── */
+@utility shadow-bmc-card {
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+@utility shadow-bmc-button {
+  box-shadow: 0 0 20px rgba(192, 57, 43, 0.3);
+}
+
+@utility shadow-bmc-button-hover {
+  box-shadow: 0 0 32px rgba(192, 57, 43, 0.45);
+}
+
 
 ============================================================
 FILE: app\kegiatan\cara-ikut\page.tsx
@@ -1032,26 +1709,73 @@ FILE: app\kegiatan\jadwal\page.tsx
 ============================================================
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 import { EVENTS } from '@/constants/communityData';
 import SearchInput from '@/components/ui/SearchInput';
 
+/* ─── Constants ─── */
 const MONTHS = [
   'Semua Bulan', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
   'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
-];
+] as const;
 
+/* ─── Sub-komponen Kartu Kegiatan (dipisahkan untuk readability) ─── */
+function EventCard({ item }: { item: typeof EVENTS[number] }) {
+  return (
+    <article className="group rounded-xl border border-white/5 bg-[#0D0D0D]/80 backdrop-blur-sm p-5 hover:border-[#D4AF37]/30 hover:bg-[#0D0D0D] transition-all duration-300">
+      {/* Badge tanggal & jam */}
+      <div className="flex items-center gap-2 mb-3">
+        <span className="inline-flex items-center gap-1.5 text-[11px] font-bold tracking-[0.08em] uppercase text-[#D4AF37] bg-[#D4AF37]/10 px-2.5 py-1 rounded-full">
+          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          {item.tanggal}
+        </span>
+        {item.jam && (
+          <span className="text-[11px] text-[#8A8A94] font-medium">
+            • {item.jam}
+          </span>
+        )}
+      </div>
+
+      {/* Judul */}
+      <h2 className="font-bold text-[#F5F5F5] text-lg mb-2 group-hover:text-white transition-colors leading-snug">
+        {item.nama}
+      </h2>
+
+      {/* Lokasi */}
+      <div className="flex items-center gap-1.5 text-sm text-[#9A9AA5] mb-3">
+        <svg className="w-3.5 h-3.5 shrink-0 text-[#CC1111]/70" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+        {item.lokasi}
+      </div>
+
+      {/* Deskripsi */}
+      <p className="text-sm text-[#B4B4BD] leading-relaxed line-clamp-3">
+        {item.deskripsi}
+      </p>
+    </article>
+  );
+}
+
+/* ─── Komponen Utama ─── */
 export default function JadwalPage() {
   const [month, setMonth] = useState<number>(0);
   const [year, setYear] = useState<string>('Semua Tahun');
   const [q, setQ] = useState('');
 
+  // Ekstrak daftar tahun unik dari data event
   const years = useMemo(() => {
-    const ys = Array.from(new Set(EVENTS.map((e) => new Date(e.tanggal).getFullYear().toString())));
-    return ['Semua Tahun', ...ys.sort()];
+    const ys = Array.from(
+      new Set(EVENTS.map((e) => new Date(e.tanggal).getFullYear().toString()))
+    );
+    return ['Semua Tahun', ...ys.sort((a, b) => b.localeCompare(a))]; // Tahun terbaru dulu
   }, []);
 
-  const filtered = useMemo(() => {
+  // Filter & search logic — dibungkus useCallback untuk prediktabilitas
+  const getFilteredEvents = useCallback(() => {
     const query = q.trim().toLowerCase();
 
     return EVENTS.filter((e) => {
@@ -1059,50 +1783,118 @@ export default function JadwalPage() {
       const m = d.getMonth() + 1;
       const y = d.getFullYear().toString();
 
-      const monthOk = month === 0 || m === month;
-      const yearOk = year === 'Semua Tahun' || y === year;
+      if (month !== 0 && m !== month) return false;
+      if (year !== 'Semua Tahun' && y !== year) return false;
 
-      const searchTarget = `${e.nama} ${e.lokasi} ${e.deskripsi}`.toLowerCase();
-      const searchOk = !query || searchTarget.includes(query);
+      if (query) {
+        const searchTarget = `${e.nama} ${e.lokasi} ${e.deskripsi}`.toLowerCase();
+        if (!searchTarget.includes(query)) return false;
+      }
 
-      return monthOk && yearOk && searchOk;
-    }).sort((a, b) => a.tanggal.localeCompare(b.tanggal));
+      return true;
+    }).sort((a, b) => a.tanggal.localeCompare(b.tanggal)); // Ascending: terdekat dulu
   }, [month, year, q]);
 
+  const filtered = useMemo(() => getFilteredEvents(), [getFilteredEvents]);
+
   return (
-    <section className="max-w-5xl mx-auto px-6 py-16">
-      <h1 className="text-3xl font-bold mb-4">Jadwal Terdekat</h1>
-      <p className="text-zinc-400 mb-8">Agenda kegiatan yang akan datang.</p>
-
-      <div className="flex flex-wrap gap-3 mb-8 items-center">
-        <select value={month} onChange={(e) => setMonth(Number(e.target.value))} className="bg-[#0D0D0D] border border-white/10 rounded-lg px-3 py-2 text-sm">
-          {MONTHS.map((m, idx) => <option key={m} value={idx}>{m}</option>)}
-        </select>
-
-        <select value={year} onChange={(e) => setYear(e.target.value)} className="bg-[#0D0D0D] border border-white/10 rounded-lg px-3 py-2 text-sm">
-          {years.map((y) => <option key={y} value={y}>{y}</option>)}
-        </select>
-
-        <SearchInput value={q} onChange={setQ} placeholder="Cari nama kegiatan, lokasi, deskripsi..." />
+    <main className="max-w-5xl mx-auto px-5 sm:px-6 py-16 sm:py-20">
+      {/* Header */}
+      <div className="mb-10">
+        <span className="inline-block text-[10px] font-bold tracking-[0.2em] uppercase text-[#D4AF37] mb-3">
+          Agenda
+        </span>
+        <h1 className="text-[2rem] sm:text-[2.5rem] font-extrabold text-[#F5F5F5] font-serif tracking-tight leading-tight mb-3">
+          Jadwal Kegiatan
+        </h1>
+        <p className="text-sm text-[#9A9AA5] max-w-xl leading-relaxed">
+          Agenda kegiatan yang akan datang. Gunakan filter untuk menemukan kegiatan berdasarkan bulan atau tahun.
+        </p>
       </div>
 
-      {filtered.length === 0 ? (
-        <p className="text-zinc-400">Belum ada jadwal pada filter/pencarian ini.</p>
-      ) : (
-        <div className="space-y-3">
-          {filtered.map((item) => (
-            <article key={item.id} className="rounded-xl border border-white/10 p-4">
-              <div className="text-xs text-[#D4AF37] mb-1">{item.tanggal} • {item.jam}</div>
-              <h2 className="font-semibold">{item.nama}</h2>
-              <p className="text-sm text-zinc-400">{item.lokasi}</p>
-              <p className="text-sm text-zinc-300 mt-2">{item.deskripsi}</p>
-            </article>
-          ))}
+      {/* Filter Bar — redesigned dengan Tailwind penuh */}
+      <div className="flex flex-col sm:flex-row flex-wrap gap-3 mb-10">
+        {/* Select Bulan */}
+        <div className="relative flex-1 min-w-[160px]">
+          <label htmlFor="filter-month" className="sr-only">Filter Bulan</label>
+          <select
+            id="filter-month"
+            value={month}
+            onChange={(e) => setMonth(Number(e.target.value))}
+            className="w-full appearance-none bg-[#0D0D0D] border border-white/10 rounded-xl px-4 py-2.5 pr-10 text-sm text-[#E8E6E0] font-medium cursor-pointer hover:border-white/20 focus:border-[#D4AF37]/50 focus:outline-none focus:ring-1 focus:ring-[#D4AF37]/20 transition-all duration-300"
+          >
+            {MONTHS.map((m, idx) => (
+              <option key={m} value={idx} className="bg-[#121212] text-[#E8E6E0]">
+                {m}
+              </option>
+            ))}
+          </select>
+          {/* Custom chevron icon */}
+          <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2">
+            <svg className="w-4 h-4 text-[#8A8A94]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          </div>
         </div>
+
+        {/* Select Tahun */}
+        <div className="relative flex-1 min-w-[140px]">
+          <label htmlFor="filter-year" className="sr-only">Filter Tahun</label>
+          <select
+            id="filter-year"
+            value={year}
+            onChange={(e) => setYear(e.target.value)}
+            className="w-full appearance-none bg-[#0D0D0D] border border-white/10 rounded-xl px-4 py-2.5 pr-10 text-sm text-[#E8E6E0] font-medium cursor-pointer hover:border-white/20 focus:border-[#D4AF37]/50 focus:outline-none focus:ring-1 focus:ring-[#D4AF37]/20 transition-all duration-300"
+          >
+            {years.map((y) => (
+              <option key={y} value={y} className="bg-[#121212] text-[#E8E6E0]">
+                {y}
+              </option>
+            ))}
+          </select>
+          <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2">
+            <svg className="w-4 h-4 text-[#8A8A94]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          </div>
+        </div>
+
+        {/* Search Input — flex lebih besar */}
+        <div className="flex-[2] min-w-[200px]">
+          <SearchInput
+            value={q}
+            onChange={setQ}
+            placeholder="Cari nama kegiatan, lokasi, deskripsi..."
+          />
+        </div>
+      </div>
+
+      {/* Hasil */}
+      {filtered.length === 0 ? (
+        <div className="text-center py-16">
+          <div className="text-5xl mb-4 opacity-30">📅</div>
+          <p className="text-[#9A9AA5] text-lg font-medium">Belum ada jadwal pada filter ini.</p>
+          <p className="text-sm text-[#8A8A94] mt-1">Coba ubah bulan, tahun, atau kata kunci pencarian.</p>
+        </div>
+      ) : (
+        <>
+          {/* Counter info */}
+          <p className="text-xs text-[#8A8A94] mb-5 font-medium tracking-wide uppercase">
+            Ditemukan <span className="text-[#D4AF37] font-bold">{filtered.length}</span> kegiatan
+          </p>
+
+          {/* List */}
+          <div className="space-y-3">
+            {filtered.map((item) => (
+              <EventCard key={item.id} item={item} />
+            ))}
+          </div>
+        </>
       )}
-    </section>
+    </main>
   );
 }
+
 
 ============================================================
 FILE: app\kegiatan\page.tsx
@@ -1278,18 +2070,12 @@ import { Inter, Playfair_Display } from 'next/font/google';
 import './globals.css';
 
 import GlobalBackground from '@/components/global-background';
+import AnnouncementBanner from '@/components/ui/AnnouncementBanner';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import PageTransition from '@/components/page-transition';
 import ScrollThread from '@/components/ui/ScrollThread';
 
-/* ─── FONT SETUP ───────────────────────────────────────────────────────────
-   Ini yang hilang sebelumnya. Semua komponen (Hero, ProgramCard, dst) sudah
-   memakai var(--font-sans) dan var(--font-display), tapi variabelnya tidak
-   pernah didefinisikan karena RootLayout kosong. Ganti font di bawah kalau
-   Anda punya pilihan font display lain yang lebih sesuai identitas BMC —
-   Playfair Display cuma pilihan default yang wajar untuk kesan "prestige".
-------------------------------------------------------------------------- */
 const sans = Inter({
   subsets: ['latin'],
   variable: '--font-sans',
@@ -1355,6 +2141,9 @@ export default function RootLayout({
   return (
     <html lang="id" className={`${sans.variable} ${display.variable}`}>
       <body className="relative min-h-screen antialiased">
+        {/* Banner pengumuman — paling atas di DOM, geser Navbar lewat CSS variable --bmc-banner-h */}
+        <AnnouncementBanner />
+
         {/* Latar global — gradient bars + loom grid, harus di paling belakang (z-0) */}
         <GlobalBackground />
 
@@ -1716,7 +2505,586 @@ export default function NotFound() {
 ============================================================
 FILE: app\page.tsx
 ============================================================
-// app/page.tsx
+'use client';
+
+import { useEffect, useRef, useState, useCallback } from 'react';
+import Link from 'next/link';
+import { SLIDES, STATS, PROGRAMS, TESTIMONIALS, PROG_COLOR } from '@/constants/data';
+import { getNearestEvent, getLatestArchive } from '@/constants/communityData';
+import useScrollReveal from '@/hooks/useScrollReveal';
+import useCountUp from '@/hooks/useCountUp';
+import InteractiveWeaveCanvas from '@/components/ui/InteractiveWeaveCanvas';
+import { Divider, SectionLabel, ProgramCardImage } from '@/components/ui/SharedComponents';
+import { cn } from '@/lib/utils';
+
+/* ─── Sub-komponen StatItem ─────────────────────────────────────────────── */
+function StatItem({ value, label, delay, start }: { value: string; label: string; delay: number; start: boolean }) {
+  const isInfinity = value.includes('∞');
+  const numericPart = parseInt(value.replace(/[^0-9]/g, ''), 10);
+  const suffix = value.includes('+') ? '+' : '';
+  const counted = useCountUp(isNaN(numericPart) ? 0 : numericPart, 1600, start);
+
+  return (
+    <div
+      className={cn(
+        'flex flex-col items-center justify-center px-4 py-7 sm:px-6 sm:py-10 bg-[#0A0806] transition-all duration-800 ease-out-expo',
+        start ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+      )}
+      style={{ transitionDelay: `${delay}ms` }}
+    >
+      <div className="text-3xl sm:text-4xl font-bold text-[#F5F5F5] font-serif tracking-tight mb-1">
+        {isInfinity ? (
+          <span className="text-[#C0392B]">∞</span>
+        ) : (
+          <>
+            <span className="text-[#F5F5F5]">{counted}</span>
+            {suffix && <span className="text-[#C0392B]">{suffix}</span>}
+          </>
+        )}
+      </div>
+      <div className="text-[9px] sm:text-[10px] text-[#A0A0AA] tracking-[0.12em] uppercase font-bold">
+        {label}
+      </div>
+    </div>
+  );
+}
+
+export default function HomePage() {
+  const [activeSlide, setActiveSlide] = useState(0);
+  const [mounted, setMounted] = useState(false);
+  const [activeTestimonial, setActiveTestimonial] = useState(0);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const isMountedRef = useRef(false);
+
+  const { ref: statsRef, visible: statsVisible } = useScrollReveal();
+  const { ref: introRef, visible: introVisible } = useScrollReveal();
+  const { ref: progTeaserRef, visible: progTeaserVisible } = useScrollReveal();
+  const { ref: testimonialRef, visible: testimonialVisible } = useScrollReveal();
+  const { ref: ctaRef, visible: ctaVisible } = useScrollReveal();
+
+  const nearest = getNearestEvent();
+  const latestArchive = getLatestArchive();
+
+  /* ─── Timer Logic ─────────────────────────────────────────────────────── */
+  const clearTimer = useCallback(() => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+  }, []);
+
+  const startTimer = useCallback(() => {
+    if (!isMountedRef.current) return;
+    clearTimer();
+    timerRef.current = setInterval(() => {
+      setActiveSlide((prev) => (prev + 1) % SLIDES.length);
+    }, 7000);
+  }, [clearTimer]);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    const t = setTimeout(() => setMounted(true), 100);
+    startTimer();
+    
+    return () => {
+      isMountedRef.current = false;
+      clearTimeout(t);
+      clearTimer();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const goToSlide = (idx: number) => {
+    clearTimer();
+    setActiveSlide(idx);
+    startTimer();
+  };
+
+  return (
+    <main aria-label="Halaman Beranda" className="overflow-x-hidden">
+      {/* ─── HERO SECTION — HUMAN SPOTLIGHT ──────────────────────────────── */}
+      <section className="relative min-h-[calc(100vh-70px)] flex flex-col justify-center items-center px-5 pt-24 pb-10 sm:px-6 sm:pt-28 sm:pb-12 overflow-hidden">
+        {/* Background Image */}
+        <div className="absolute inset-0 z-0">
+          <img 
+            src="/hero-bg.jpeg" 
+            alt="" 
+            aria-hidden="true"
+            className="w-full h-full object-cover"
+            loading="eager"
+          />
+          {/* Radial vignette — foto TERLIHAT di tengah, gelap hanya di pinggir */}
+          <div 
+            className="absolute inset-0"
+            style={{
+              background: `
+                radial-gradient(
+                  ellipse 80% 70% at 50% 40%,
+                  rgba(12,10,8,0.15) 0%,
+                  rgba(12,10,8,0.35) 40%,
+                  rgba(12,10,8,0.8) 100%
+                ),
+                linear-gradient(
+                  180deg,
+                  rgba(192,57,43,0.06) 0%,
+                  transparent 40%,
+                  rgba(12,10,8,0.3) 100%
+                )
+              `,
+              backdropFilter: 'blur(0px)',
+            }}
+          />
+        </div>
+
+        {/* Interactive Canvas — dipertahankan */}
+        <InteractiveWeaveCanvas />
+
+        {/* Warm Glow Effect */}
+        <div
+          aria-hidden="true"
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(900px,120vw)] h-[300px] sm:h-[460px] rounded-full pointer-events-none z-0"
+          style={{ background: 'radial-gradient(ellipse, rgba(212,175,55,0.06) 0%, rgba(192,57,43,0.04) 40%, transparent 70%)', filter: 'blur(64px)' }}
+        />
+
+        {/* Hero Content */}
+        <div className="relative z-10 max-w-4xl w-full text-center">
+          {/* Badges */}
+          <div
+            className={cn(
+              'flex flex-wrap items-center justify-center gap-2 mb-5 sm:mb-6 transition-all duration-800 ease-out-expo',
+              mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2.5'
+            )}
+            style={{ transitionDelay: '200ms' }}
+          >
+            {nearest && (
+              <Link
+                href="/kegiatan/jadwal"
+                className="inline-flex items-center gap-2 rounded-full border border-[#D4AF37]/35 bg-[#D4AF37]/10 px-3 py-1.5 text-[9px] sm:text-[10px] font-bold tracking-[0.08em] uppercase text-[#D4AF37] hover:bg-[#D4AF37]/20 transition-all duration-300 no-underline"
+              >
+                Kegiatan terdekat: {nearest.nama} • {nearest.tanggal}
+              </Link>
+            )}
+            {latestArchive && (
+              <Link
+                href={`/arsip/${latestArchive.slug}`}
+                className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[9px] sm:text-[10px] font-bold tracking-[0.08em] uppercase text-[#E8E6E0] hover:bg-white/10 transition-all duration-300 no-underline"
+              >
+                Arsip terbaru: {latestArchive.judul} →
+              </Link>
+            )}
+          </div>
+
+          {/* Slides Container */}
+          <div className="relative min-h-[280px] sm:min-h-[300px] md:min-h-[320px] mb-6 sm:mb-8">
+            {SLIDES.map((slide, idx) => {
+              const isCurrent = idx === activeSlide;
+              return (
+                <div
+                  key={idx}
+                  aria-hidden={!isCurrent}
+                  className={cn(
+                    'transition-all duration-1200 ease-out-expo',
+                    isCurrent 
+                      ? 'relative opacity-100 translate-y-0 scale-100' 
+                      : 'absolute inset-0 opacity-0 translate-y-6 scale-95 pointer-events-none'
+                  )}
+                >
+                  <span className="block text-[9px] sm:text-[10px] font-bold text-[#D4AF37] tracking-[0.3em] sm:tracking-[0.35em] uppercase mb-3 sm:mb-4">
+                    {slide.eyebrow}
+                  </span>
+                  <h1 className="text-[2rem] sm:text-[2.6rem] md:text-[3.4rem] lg:text-[4.2rem] font-extrabold leading-[1.15] text-[#F5F5F5] font-serif tracking-tight mb-4">
+                    {slide.title}
+                    <br />
+                    <span className="text-[#C0392B] [text-shadow:0_0_30px_rgba(192,57,43,0.2)]">
+                      {slide.highlight}
+                    </span>
+                  </h1>
+                  <p className="text-[0.8rem] sm:text-[0.9rem] md:text-[1.05rem] text-[#C4C4CE] max-w-xl mx-auto mt-4 sm:mt-5 leading-relaxed">
+                    {slide.desc}
+                  </p>
+                  <div className="mt-7 sm:mt-9 flex justify-center gap-3.5">
+                    <Link
+                      href={`/${slide.ctaPage === 'home' ? '' : slide.ctaPage}`}
+                      className="bmc-shine inline-block text-[10px] sm:text-[11px] font-bold tracking-[0.12em] uppercase px-7 py-3.5 sm:px-9 sm:py-4 rounded-full text-white no-underline bg-[#C0392B] hover:bg-[#A93226] shadow-[0_0_30px_rgba(192,57,43,0.35)] hover:shadow-[0_0_40px_rgba(192,57,43,0.5)] transition-all duration-300 animate-warm-pulse"
+                    >
+                      {slide.ctaLabel}
+                    </Link>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Navigation Dots */}
+          <div
+            className={cn(
+              'flex justify-center items-center gap-3 transition-opacity duration-600',
+              mounted ? 'opacity-100' : 'opacity-0'
+            )}
+            style={{ transitionDelay: '400ms' }}
+          >
+            {SLIDES.map((_, idx) => (
+              <button
+                key={idx}
+                onClick={() => goToSlide(idx)}
+                aria-label={`Pindah ke slide ${idx + 1}`}
+                className={cn(
+                  'h-1 rounded-full border-none cursor-pointer p-0 transition-all duration-450 ease-out-expo',
+                  idx === activeSlide 
+                    ? 'w-8 bg-[#C0392B] shadow-[0_0_10px_rgba(192,57,43,0.5)]' 
+                    : 'w-2 bg-white/10 hover:bg-white/20'
+                )}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Scroll Indicator */}
+        <div className="absolute bottom-5 sm:bottom-6 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-2 opacity-50">
+          <span className="text-[8px] sm:text-[9px] font-semibold tracking-[0.15em] uppercase text-white/70">Gulir Kebawah</span>
+          <div className="w-px h-6 sm:h-7 bg-gradient-to-b from-[#C0392B] to-transparent" />
+        </div>
+      </section>
+
+      {/* ─── STATS (Floating Card) ────────────────────────────────────────── */}
+      <div className="relative z-20 px-4 -mt-10 sm:-mt-14 max-w-5xl mx-auto">
+        <div 
+          ref={statsRef}
+          className="grid grid-cols-2 md:grid-cols-4 rounded-2xl border border-white/10 bg-[#100E0C]/95 backdrop-blur-xl shadow-[0_20px_50px_rgba(0,0,0,0.8)] overflow-hidden"
+        >
+          {STATS.map((s, i) => (
+            <StatItem key={i} value={s.value} label={s.label} delay={i * 100} start={statsVisible} />
+          ))}
+        </div>
+      </div>
+
+      {/* ─── INTRO / SIAPA KAMI — DENGAN FOTO KOMUNITAS ───────────────────── */}
+      <section ref={introRef} className="relative z-10 px-5 py-16 sm:px-6 sm:py-20 md:py-24 max-w-[1100px] mx-auto">
+        {/* Warm ambient glow */}
+        <div 
+          aria-hidden="true"
+          className="absolute top-0 left-1/4 w-[600px] h-[400px] pointer-events-none"
+          style={{ background: 'radial-gradient(ellipse, rgba(212,175,55,0.06) 0%, rgba(192,57,43,0.03) 40%, transparent 70%)', filter: 'blur(80px)' }}
+        />
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-12 items-center">
+          {/* Left Column */}
+          <div>
+            <SectionLabel>Siapa Kami?</SectionLabel>
+            <h2
+              className={cn(
+                'text-[1.7rem] sm:text-[2.1rem] md:text-[2.5rem] lg:text-[2.8rem] font-bold text-[#F5F5F5] font-serif tracking-tight leading-tight mb-6 transition-all duration-800 ease-out-expo',
+                introVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
+              )}
+              style={{ transitionDelay: '80ms' }}
+            >
+              Komunitas yang Merajut <br />
+              <span className="text-[#C0392B]">Persaudaraan Lintas Batas</span>
+            </h2>
+            <p 
+              className={cn(
+                'text-sm text-[#B8B8C0] leading-relaxed mb-5 transition-all duration-800 ease-out-expo',
+                introVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
+              )}
+              style={{ transitionDelay: '160ms' }}
+            >
+              Benang Merah Community lahir dari keyakinan sederhana di Manado: di tengah dunia yang makin terpisah-pisah, persaudaraan sejati bukan tentang menjadi sama, tapi tentang{' '}
+              merajut perbedaan menjadi kekuatan.
+
+            </p>
+            <p 
+              className={cn(
+                'text-sm text-[#A0A0AA] leading-relaxed mb-8 transition-all duration-800 ease-out-expo',
+                introVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
+              )}
+              style={{ transitionDelay: '240ms' }}
+            >
+              Kami memfasilitasi ruang dialog sehat tanpa sekat prasangka dan kecurigaan.
+            </p>
+            <div 
+              className={cn(
+                'transition-all duration-800 ease-out-expo',
+                introVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
+              )}
+              style={{ transitionDelay: '320ms' }}
+            >
+              <Link
+                href="/tentang"
+                className="text-[11px] font-bold text-[#D4AF37] tracking-[0.15em] uppercase pb-1 border-b border-[#D4AF37]/30 hover:border-[#D4AF37] transition-colors duration-300 no-underline"
+              >
+                Pelajari Filosofi &amp; Visi Kami &rarr;
+              </Link>
+            </div>
+          </div>
+
+          {/* Right Column — FOTO KOMUNITAS + QUOTE */}
+          <div 
+            className={cn(
+              'relative transition-all duration-800 ease-out-expo',
+              introVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
+            )}
+            style={{ transitionDelay: '200ms' }}
+          >
+            <div className="relative rounded-3xl overflow-hidden border border-white/10 h-full min-h-[380px] group">
+              {/* Foto kegiatan — diskusi atau pengukuhan */}
+              <img 
+                src="/diskusi.jpg" 
+                alt="Anggota Benang Merah Community berdiskusi dengan hangat"
+                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+              />
+              {/* Gradient overlay — gelap hanya di bawah untuk teks */}
+              <div className="absolute inset-0 bg-gradient-to-t from-[#0C0A08]/90 via-[#0C0A08]/15 to-transparent" />
+              
+              {/* Quote overlay di bottom */}
+              <div className="absolute bottom-0 left-0 right-0 p-7 sm:p-9">
+                <p className="text-[#E8E6E0] text-base sm:text-lg italic font-serif leading-relaxed mb-3">
+                  &ldquo;Persaudaraan sejati dimulai dari keberanian untuk berdialog, bukan dari keseragaman yang dipaksakan.&rdquo;
+                </p>
+                <div className="flex items-center gap-3">
+                  {/* Foto member tersenyum */}
+                  <div className="w-10 h-10 rounded-full overflow-hidden border border-[#D4AF37]/30">
+                    <img 
+                      src="/arthur.JPG" 
+                      alt="Member tersenyum"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div>
+                    <div className="text-[12px] font-bold text-[#F5F5F5]">Arthur</div>
+                    <div className="text-[10px] text-[#B8B8C0]">Anggota Aktif</div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Gold accent line */}
+              <div className="absolute top-4 left-7 right-7 h-px bg-gradient-to-r from-transparent via-[#D4AF37]/20 to-transparent" />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── PROGRAM TEASER ───────────────────────────────────────────────── */}
+      <Divider />
+      <section ref={progTeaserRef} className="relative z-10 px-5 py-16 sm:px-6 sm:py-20 md:py-24 bg-white/[0.01]">
+        <div className="max-w-[1100px] mx-auto">
+          <div 
+            className={cn(
+              'text-center mb-12 sm:mb-14 transition-all duration-800 ease-out-expo',
+              progTeaserVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
+            )}
+          >
+            <SectionLabel gold>Program Utama Kami</SectionLabel>
+            <h2 className="text-[1.7rem] sm:text-[2.1rem] md:text-[2.5rem] font-bold font-serif mb-4 text-[#F5F5F5]">
+              Kegiatan Merajut Kebersamaan
+            </h2>
+            <p className="text-sm text-[#B8B8C0] max-w-[520px] mx-auto leading-relaxed">
+              Setiap program dirancang untuk membuka ruang diskusi yang jujur, menumbuhkan empati, dan melahirkan karya kreatif bersama terbuka untuk semua kalangan di Sulawesi Utara.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {PROGRAMS.slice(0, 3).map((p, i) => {
+              const c = PROG_COLOR[p.color] || PROG_COLOR.red;
+              return (
+                <article
+                  key={p.code}
+                  className={cn(
+                    'relative rounded-2xl p-7 sm:p-8 bg-[#100E0C] border border-white/5 hover:border-white/10 transition-all duration-500 group',
+                    progTeaserVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
+                  )}
+                  style={{ transitionDelay: `${i * 120}ms` }}
+                >
+                  {/* Subtle warm accent di pojok */}
+                  <div className="absolute top-0 right-0 w-32 h-32 rounded-bl-2xl opacity-[0.03] pointer-events-none"
+                    style={{ background: `radial-gradient(circle at top right, ${c.tag}, transparent 70%)` }}
+                  />
+                  
+                  <ProgramCardImage program={p} isHovered={false} />
+                  <div className="flex justify-between items-start mb-4">
+                    <span className="text-[10px] font-bold tracking-[0.12em]" style={{ color: c.tag }}>{p.focus}</span>
+                    <span
+                      className="text-[9px] font-bold px-2.5 py-1 rounded-full border"
+                      style={{ background: c.tagBg, borderColor: c.border, color: c.tag }}
+                    >
+                      {p.freq}
+                    </span>
+                  </div>
+                  <h3 className="text-xl font-bold font-serif mb-3 text-[#F5F5F5] group-hover:text-white transition-colors">{p.name}</h3>
+                  <p className="text-[13px] text-[#B8B8C0] leading-relaxed mb-6">{p.desc}</p>
+                  <div className="flex items-center gap-2 mt-auto">
+                    <span className="text-[11px] text-[#D4AF37] font-medium">Jadwal:</span>
+                    <span className="text-[11px] text-[#A0A0AA]">{p.schedule}</span>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+
+          <div 
+            className={cn(
+              'text-center mt-10 sm:mt-12 transition-all duration-800 ease-out-expo',
+              progTeaserVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
+            )}
+            style={{ transitionDelay: '300ms' }}
+          >
+            <Link
+              href="/program"
+              className="inline-block text-[11px] font-bold tracking-[0.1em] uppercase px-7 py-3.5 sm:px-8 sm:py-3.5 rounded-full text-[#D4AF37] border border-[#D4AF37]/25 hover:border-[#D4AF37] hover:bg-[#D4AF37]/5 transition-all duration-300 no-underline"
+            >
+              Lihat Seluruh Detail Program →
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── TESTIMONIAL — WARM & PERSONAL ────────────────────────────────── */}
+      <Divider />
+      <section ref={testimonialRef} className="relative z-10 px-5 py-16 sm:px-6 sm:py-20 md:py-24">
+        {/* Warm ambient glow di belakang */}
+        <div 
+          aria-hidden="true"
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[300px] rounded-full pointer-events-none"
+          style={{ background: 'radial-gradient(ellipse, rgba(212,175,55,0.05) 0%, rgba(192,57,43,0.03) 40%, transparent 70%)', filter: 'blur(80px)' }}
+        />
+        
+        <div className="max-w-[800px] mx-auto text-center">
+          <div 
+            className={cn(
+              'transition-all duration-800 ease-out-expo',
+              testimonialVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
+            )}
+          >
+            <SectionLabel>Suara Dari Anggota</SectionLabel>
+            <h2 className="text-[1.7rem] sm:text-[2.1rem] md:text-[2.5rem] font-bold font-serif mb-9 sm:mb-10 text-[#F5F5F5]">
+              Suara Pertumbuhan Bersama
+            </h2>
+          </div>
+
+          <div 
+            className={cn(
+              'relative min-h-[280px] sm:min-h-[260px] flex items-center justify-center transition-all duration-800 ease-out-expo',
+              testimonialVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
+            )}
+            style={{ transitionDelay: '120ms' }}
+          >
+            {TESTIMONIALS.map((t, idx) => {
+              const isCurrent = idx === activeTestimonial;
+              return (
+                <div
+                  key={idx}
+                  className={cn(
+                    'transition-all duration-500 ease-out-expo',
+                    isCurrent 
+                      ? 'relative opacity-100 scale-100' 
+                      : 'absolute inset-0 opacity-0 scale-95 pointer-events-none'
+                  )}
+                >
+                  {/* Quote dengan tanda kutip dekoratif */}
+                  <div className="relative">
+                    <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-5xl text-[#D4AF37]/15 font-serif select-none">
+                      &ldquo;
+                    </span>
+                    <blockquote className="text-base sm:text-lg italic text-[#E8E6E0] leading-relaxed mb-6 font-serif px-2 pt-4">
+                      {t.quote}
+                    </blockquote>
+                  </div>
+                  
+                  {/* Author dengan avatar */}
+                  <div className="flex items-center justify-center gap-3">
+                    <div
+                      className="w-12 h-12 rounded-full flex items-center justify-center font-bold text-sm shrink-0 border-2"
+                      style={{
+                        background: t.color === 'red' ? 'rgba(192,57,43,0.12)' : 'rgba(212,175,55,0.12)',
+                        borderColor: t.color === 'red' ? 'rgba(192,57,43,0.25)' : 'rgba(212,175,55,0.25)',
+                        color: t.color === 'red' ? '#C0392B' : '#D4AF37',
+                      }}
+                    >
+                      {t.initials}
+                    </div>
+                    <div className="text-left">
+                      <div className="text-[13px] font-bold text-[#F5F5F5]">{t.author}</div>
+                      <div className="text-[11px] text-[#A0A0AA]">{t.role}</div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Dots Navigation */}
+          <div 
+            className={cn(
+              'flex justify-center gap-2.5 mt-8 transition-all duration-800 ease-out-expo',
+              testimonialVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
+            )}
+            style={{ transitionDelay: '200ms' }}
+          >
+            {TESTIMONIALS.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setActiveTestimonial(i)}
+                aria-label={`Testimoni ${i + 1}`}
+                className={cn(
+                  'w-2.5 h-2.5 rounded-full border-none cursor-pointer p-0 transition-all duration-300',
+                  i === activeTestimonial 
+                    ? 'bg-[#C0392B] scale-110' 
+                    : 'bg-white/10 hover:bg-white/20'
+                )}
+              />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── CTA AKHIR — WARM INVITATION ──────────────────────────────────── */}
+      <Divider />
+      <section
+        ref={ctaRef}
+        className="relative z-10 px-5 py-16 sm:px-6 sm:py-20 md:py-24 text-center bg-gradient-to-b from-transparent via-[#C0392B]/[0.03] to-transparent"
+      >
+        {/* Warm glow */}
+        <div 
+          aria-hidden="true"
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[300px] rounded-full pointer-events-none"
+          style={{ background: 'radial-gradient(ellipse, rgba(212,175,55,0.08) 0%, transparent 70%)', filter: 'blur(60px)' }}
+        />
+        
+        <div 
+          className={cn(
+            'max-w-[600px] mx-auto transition-all duration-800 ease-out-expo',
+            ctaVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
+          )}
+        >
+          <SectionLabel>Mari Bertumbuh</SectionLabel>
+          <h2 className="text-[1.7rem] sm:text-[2.1rem] md:text-[2.5rem] font-bold font-serif mb-4 text-[#F5F5F5]">
+            Siap Merajut Helai Benang Anda?
+          </h2>
+          <p className="text-sm text-[#B8B8C0] leading-relaxed mb-9 sm:mb-10">
+            Kami selalu menyediakan tempat duduk dan kopi hangat bagi siapa pun yang ingin ngobrol dengan terbuka di Manado.
+          </p>
+          
+          {/* Tombol dengan warm pulse */}
+          <Link
+            href="/daftar"
+            className="bmc-shine animate-warm-pulse inline-block text-[10px] sm:text-[11px] font-bold tracking-[0.12em] uppercase px-8 py-3.5 sm:px-11 sm:py-4 rounded-full text-white no-underline bg-[#C0392B] hover:bg-[#A93226] shadow-[0_0_30px_rgba(192,57,43,0.3)] hover:shadow-[0_0_40px_rgba(192,57,43,0.45)] transition-all duration-300"
+          >
+            Isi Formulir Bergabung &rarr;
+          </Link>
+          
+          {/* Subtle invitation text */}
+          <p className="text-[11px] text-[#A0A0AA] mt-5 italic">
+            Atau cukup datang dan ngobrol — pintu kami selalu terbuka.
+          </p>
+        </div>
+      </section>
+    </main>
+  );
+}
+
+
+============================================================
+FILE: app\page_lama.tsx
+============================================================
 'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
@@ -1777,6 +3145,19 @@ export default function HomePage() {
 
       {/* ─── HERO ─────────────────────────────────────────────────────────── */}
       <div className="relative min-h-[calc(100vh-70px)] flex flex-col justify-center items-center px-5 pt-24 pb-10 sm:px-6 sm:pt-28 sm:pb-12 overflow-hidden">
+        
+        {/* FOTO BACKGROUND BARU & OVERLAY HITAM (z-0) */}
+        <div className="absolute inset-0 z-0 pointer-events-none">
+          <img 
+            src="/hero-bg.jpeg" 
+            alt="Hero Background" 
+            className="w-full h-full object-cover"
+          />
+          {/* Lapisan hitam transparan dengan sedikit efek blur halus agar teks putih kontras */}
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-[1px]" />
+        </div>
+
+        {/* Canvas animasi benang tetap dipertahankan dan otomatis berada di atas foto */}
         <InteractiveWeaveCanvas />
 
         <div
@@ -1785,6 +3166,7 @@ export default function HomePage() {
           style={{ background: 'radial-gradient(ellipse, rgba(204,17,17,0.08) 0%, transparent 70%)', filter: 'blur(64px)' }}
         />
 
+        {/* Konten teks (z-10) berada paling atas */}
         <div className="relative z-10 max-w-4xl w-full text-center pointer-events-none">
           
           {/* BADGE BARU */}
@@ -1901,18 +3283,21 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* ─── STATS ────────────────────────────────────────────────────────── */}
-      <Divider />
-      <div
-        ref={statsRef}
-        className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-px"
-        style={{ background: 'rgba(255,255,255,0.04)' }}
-      >
-        {STATS.map((s, i) => (
-          <StatItem key={i} value={s.value} label={s.label} delay={i * 100} start={statsVisible} />
-        ))}
+      {/* ─── STATS (Floating Card ala Indorelawan - Versi BMC Premium) ─── */}
+      <div className="relative z-20 px-4 -mt-10 sm:-mt-14 max-w-5xl mx-auto">
+        <div 
+          ref={statsRef}
+          className="grid grid-cols-2 md:grid-cols-4 rounded-2xl border border-white/10 overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.8)]"
+          style={{ 
+            background: 'rgba(13, 13, 13, 0.95)',
+            backdropFilter: 'blur(16px)' 
+          }}
+        >
+          {STATS.map((s, i) => (
+            <StatItem key={i} value={s.value} label={s.label} delay={i * 100} start={statsVisible} />
+          ))}
+        </div>
       </div>
-      <Divider />
 
       {/* ─── INTRO / SIAPA KAMI ───────────────────────────────────────────── */}
       <section ref={introRef} className="relative z-10 px-5 py-16 sm:px-6 sm:py-20 md:py-24 max-w-[1100px] mx-auto">
@@ -3954,9 +5339,10 @@ export default function Navbar() {
   return (
     <header
       className={cn(
-        'fixed top-0 left-0 right-0 z-[9999] flex items-center justify-between',
+        'fixed left-0 right-0 z-[9999] flex items-center justify-between',
+        'top-[var(--bmc-banner-h,0px)]',
         'px-4 py-3 sm:px-6 sm:py-4',
-        'pointer-events-none transition-[transform,opacity] duration-[450ms] ease-[cubic-bezier(0.16,1,0.3,1)]',
+        'pointer-events-none transition-[top,transform,opacity] duration-[450ms] ease-[cubic-bezier(0.16,1,0.3,1)]',
         hidden ? '-translate-y-[120%] opacity-0' : 'translate-y-0 opacity-100'
       )}
     >
@@ -4210,7 +5596,6 @@ export default function Navbar() {
   );
 }
 
-
 ============================================================
 FILE: components\page-transition.tsx
 ============================================================
@@ -4244,6 +5629,128 @@ export default function PageTransition({ children }: { children: React.ReactNode
       }`}
     >
       {displayChildren}
+    </div>
+  );
+}
+
+============================================================
+FILE: components\ui\AnnouncementBanner.tsx
+============================================================
+'use client';
+
+import { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
+import { getNearestEvent, getLatestArchive } from '@/constants/communityData';
+import { cn } from '@/lib/utils';
+
+type BannerData = {
+  type: 'event' | 'archive' | 'welcome';
+  message: string;
+  link: string;
+  linkLabel: string;
+};
+
+const BANNER_HEIGHT = '44px';
+
+export default function AnnouncementBanner() {
+  const [visible, setVisible] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
+  const [bannerData, setBannerData] = useState<BannerData | null>(null);
+
+  useEffect(() => {
+    const isDismissed = sessionStorage.getItem('bmc_banner_dismissed');
+    if (isDismissed === 'true') {
+      setDismissed(true);
+      return;
+    }
+
+    const nearestEvent = getNearestEvent();
+    const latestArchive = getLatestArchive();
+
+    if (nearestEvent) {
+      setBannerData({
+        type: 'event',
+        message: `📅 ${nearestEvent.nama} — ${nearestEvent.tanggal}`,
+        link: '/kegiatan/jadwal',
+        linkLabel: 'Lihat Detail',
+      });
+    } else if (latestArchive) {
+      setBannerData({
+        type: 'archive',
+        message: `📖 Arsip terbaru: ${latestArchive.judul}`,
+        link: `/arsip/${latestArchive.slug}`,
+        linkLabel: 'Baca',
+      });
+    } else {
+      setBannerData({
+        type: 'welcome',
+        message: '👋 Baru pertama ke sini? Kenalan yuk!',
+        link: '/daftar',
+        linkLabel: 'Gabung',
+      });
+    }
+
+    const timer = setTimeout(() => setVisible(true), 800);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Sinkronkan tinggi banner ke CSS variable yang dibaca Navbar
+  useEffect(() => {
+    document.documentElement.style.setProperty(
+      '--bmc-banner-h',
+      visible ? BANNER_HEIGHT : '0px'
+    );
+
+    // Jaga-jaga: kalau komponen unmount tanpa dismiss, reset variable
+    return () => {
+      document.documentElement.style.setProperty('--bmc-banner-h', '0px');
+    };
+  }, [visible]);
+
+  const handleDismiss = useCallback(() => {
+    setVisible(false);
+    setDismissed(true);
+    sessionStorage.setItem('bmc_banner_dismissed', 'true');
+    document.documentElement.style.setProperty('--bmc-banner-h', '0px');
+  }, []);
+
+  if (dismissed || !bannerData) return null;
+
+  return (
+    <div
+      className={cn(
+        'fixed top-0 left-0 right-0 z-[10050] transition-all duration-400 ease-out-expo',
+        visible ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'
+      )}
+      style={{ height: BANNER_HEIGHT }}
+    >
+      <div className="h-full bg-gradient-to-r from-[#100E0C] via-[#141210] to-[#100E0C] border-b border-white/10 backdrop-blur-xl">
+        <div className="h-full max-w-[1100px] mx-auto px-4 flex items-center justify-between gap-3">
+          <p className="text-[11px] sm:text-[12px] text-[#E8E6E0] leading-relaxed flex-1 min-w-0 truncate">
+            {bannerData.message}
+          </p>
+
+          <div className="flex items-center gap-2 shrink-0">
+            <Link
+              href={bannerData.link}
+              className="text-[10px] sm:text-[11px] font-bold tracking-[0.06em] uppercase px-3 py-1.5 rounded-full text-white no-underline bg-[#C0392B] hover:bg-[#A93226] transition-all duration-300"
+              onClick={handleDismiss}
+            >
+              {bannerData.linkLabel}
+            </Link>
+
+            <button
+              onClick={handleDismiss}
+              aria-label="Tutup banner"
+              className="w-6 h-6 flex items-center justify-center rounded-full text-[#A0A0AA] hover:text-[#E8E6E0] hover:bg-white/5 transition-all duration-200"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -4391,6 +5898,263 @@ function Button({
 }
 
 export { Button, buttonVariants }
+
+
+============================================================
+FILE: components\ui\FormErrorAlert.tsx
+============================================================
+'use client';
+
+import { cn } from '@/lib/utils';
+
+interface FormErrorAlertProps {
+  message: string;
+  onDismiss?: () => void;
+  variant?: 'inline' | 'banner';
+}
+
+export function FormErrorAlert({
+  message,
+  onDismiss,
+  variant = 'inline',
+}: FormErrorAlertProps) {
+  if (variant === 'banner') {
+    return (
+      <div
+        role="alert"
+        className={cn(
+          'rounded-xl p-4 flex items-start gap-3',
+          'bg-bmc-red/8 border border-bmc-red/25'
+        )}
+      >
+        {/* Icon warning */}
+        <svg
+          className="w-5 h-5 shrink-0 mt-0.5 text-bmc-red"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2}
+          aria-hidden="true"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"
+          />
+        </svg>
+
+        {/* Content */}
+        <div className="flex-1">
+          <p className="text-xs text-bmc-rose font-bold mb-1">
+            Gagal Mengirim
+          </p>
+          <p className="text-xs text-bmc-text-muted leading-relaxed">
+            {message}
+          </p>
+        </div>
+
+        {/* Dismiss button */}
+        {onDismiss && (
+          <button
+            onClick={onDismiss}
+            className="shrink-0 text-bmc-text-placeholder hover:text-bmc-text-secondary transition-colors duration-200"
+            aria-label="Tutup pesan error"
+          >
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+              aria-hidden="true"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+        )}
+      </div>
+    );
+  }
+
+  // Inline variant (lebih ringkas, untuk di dalam form)
+  return (
+    <div
+      role="alert"
+      className={cn(
+        'mb-5 p-3.5 rounded-lg text-xs leading-relaxed flex items-start gap-2.5',
+        'bg-bmc-red/8 border border-bmc-red/25 text-bmc-rose'
+      )}
+    >
+      <svg
+        className="w-4 h-4 shrink-0 mt-0.5 text-bmc-red"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+        strokeWidth={2}
+        aria-hidden="true"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"
+        />
+      </svg>
+      <span>{message}</span>
+    </div>
+  );
+}
+
+
+============================================================
+FILE: components\ui\FormInput.tsx
+============================================================
+'use client';
+
+import { cn } from '@/lib/utils';
+
+interface FormInputProps {
+  label: string;
+  id: string;
+  name: string;
+  type?: string;
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+  placeholder: string;
+  required?: boolean;
+  isTextarea?: boolean;
+  rows?: number;
+  helperText?: string;
+  error?: string;
+}
+
+export function FormInput({
+  label,
+  id,
+  name,
+  type = 'text',
+  value,
+  onChange,
+  placeholder,
+  required = false,
+  isTextarea = false,
+  rows = 4,
+  helperText,
+  error,
+}: FormInputProps) {
+  const inputClasses = cn(
+    // Base styling
+    'w-full rounded-xl px-4 py-3.5',
+    'text-[13px] leading-relaxed',
+    'outline-none transition-all duration-300',
+    
+    // Background & border — pakai token BMC dari @theme
+    'bg-bmc-bg-secondary',
+    'border border-bmc-border-default',
+    'text-bmc-text-secondary',
+    'placeholder-bmc',  // utility custom di globals.css
+    
+    // Hover state
+    'hover:border-bmc-border-hover',
+    
+    // Focus state — ring gold BMC
+    'focus:border-bmc-gold focus:ring-2 focus:ring-bmc-border-active focus:bg-bmc-bg-tertiary',
+    
+    // Error state
+    error && 'border-bmc-red/50 focus:border-bmc-red focus:ring-bmc-red/30',
+    
+    // Textarea specific
+    isTextarea && 'resize-y min-h-[100px]'
+  );
+
+  return (
+    <div>
+      {/* Label */}
+      <label
+        htmlFor={id}
+        className="block text-[11px] font-bold text-bmc-text-muted tracking-[0.08em] uppercase mb-2"
+      >
+        {label}
+        {required && (
+          <span className="text-bmc-red ml-1" aria-hidden="true">*</span>
+        )}
+      </label>
+
+      {/* Input atau Textarea */}
+      {isTextarea ? (
+        <textarea
+          id={id}
+          name={name}
+          value={value}
+          onChange={onChange}
+          placeholder={placeholder}
+          rows={rows}
+          required={required}
+          aria-required={required}
+          aria-invalid={!!error}
+          aria-describedby={
+            error ? `${id}-error` : helperText ? `${id}-helper` : undefined
+          }
+          className={inputClasses}
+        />
+      ) : (
+        <input
+          type={type}
+          id={id}
+          name={name}
+          value={value}
+          onChange={onChange}
+          placeholder={placeholder}
+          required={required}
+          aria-required={required}
+          aria-invalid={!!error}
+          aria-describedby={
+            error ? `${id}-error` : helperText ? `${id}-helper` : undefined
+          }
+          className={inputClasses}
+        />
+      )}
+
+      {/* Helper text */}
+      {helperText && !error && (
+        <p
+          id={`${id}-helper`}
+          className="mt-1.5 text-[10px] text-bmc-text-placeholder leading-relaxed"
+        >
+          {helperText}
+        </p>
+      )}
+
+      {/* Error message */}
+      {error && (
+        <p
+          id={`${id}-error`}
+          role="alert"
+          className="mt-1.5 text-[10px] text-bmc-rose font-medium flex items-center gap-1"
+        >
+          <svg
+            className="w-3 h-3 shrink-0"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+            aria-hidden="true"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M12 9v2m0 4h.01M12 3l9.66 16.5H2.34L12 3z"
+            />
+          </svg>
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}
 
 
 ============================================================
@@ -4979,6 +6743,83 @@ export {
   SheetFooter,
   SheetTitle,
   SheetDescription,
+}
+
+
+============================================================
+FILE: components\ui\SubmitButton.tsx
+============================================================
+'use client';
+
+import { cn } from '@/lib/utils';
+
+interface SubmitButtonProps {
+  isLoading: boolean;
+  disabled: boolean;
+  loadingText?: string;
+  children: React.ReactNode;
+}
+
+export function SubmitButton({
+  isLoading,
+  disabled,
+  loadingText = 'Mengirim...',
+  children,
+}: SubmitButtonProps) {
+  return (
+    <button
+      type="submit"
+      disabled={disabled || isLoading}
+      aria-disabled={disabled || isLoading}
+      aria-busy={isLoading}
+      className={cn(
+        // Base styling
+        'w-full rounded-full py-4',
+        'text-[11px] font-bold tracking-[0.12em] uppercase',
+        'transition-all duration-300',
+        
+        // Active state — merah BMC
+        'bg-bmc-red text-bmc-white',
+        'shadow-bmc-button',
+        'hover:bg-bmc-red-hover hover:shadow-bmc-button-hover',
+        'active:scale-[0.98]',
+        
+        // Disabled state
+        'disabled:opacity-40 disabled:cursor-not-allowed',
+        'disabled:hover:bg-bmc-red disabled:hover:shadow-bmc-button',
+        'disabled:active:scale-100'
+      )}
+    >
+      {isLoading ? (
+        <span className="inline-flex items-center justify-center gap-2">
+          {/* Spinner SVG inline */}
+          <svg
+            className="animate-spin h-4 w-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <circle
+              className="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              strokeWidth="4"
+            />
+            <path
+              className="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+            />
+          </svg>
+          {loadingText}
+        </span>
+      ) : (
+        children
+      )}
+    </button>
+  );
 }
 
 

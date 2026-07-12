@@ -3,18 +3,12 @@ import { Inter, Playfair_Display } from 'next/font/google';
 import './globals.css';
 
 import GlobalBackground from '@/components/global-background';
+import AnnouncementBanner from '@/components/ui/AnnouncementBanner';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import PageTransition from '@/components/page-transition';
 import ScrollThread from '@/components/ui/ScrollThread';
 
-/* ─── FONT SETUP ───────────────────────────────────────────────────────────
-   Ini yang hilang sebelumnya. Semua komponen (Hero, ProgramCard, dst) sudah
-   memakai var(--font-sans) dan var(--font-display), tapi variabelnya tidak
-   pernah didefinisikan karena RootLayout kosong. Ganti font di bawah kalau
-   Anda punya pilihan font display lain yang lebih sesuai identitas BMC —
-   Playfair Display cuma pilihan default yang wajar untuk kesan "prestige".
-------------------------------------------------------------------------- */
 const sans = Inter({
   subsets: ['latin'],
   variable: '--font-sans',
@@ -80,6 +74,9 @@ export default function RootLayout({
   return (
     <html lang="id" className={`${sans.variable} ${display.variable}`}>
       <body className="relative min-h-screen antialiased">
+        {/* Banner pengumuman — paling atas di DOM, geser Navbar lewat CSS variable --bmc-banner-h */}
+        <AnnouncementBanner />
+
         {/* Latar global — gradient bars + loom grid, harus di paling belakang (z-0) */}
         <GlobalBackground />
 

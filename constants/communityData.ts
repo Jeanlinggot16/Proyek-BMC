@@ -2,7 +2,7 @@
 
 export type EventItem = {
   id: string;
-  tanggal: string; // YYYY-MM-DD
+  tanggal: string; // YYYY-MM-DD, atau 'Coming Soon' kalau tanggal belum pasti
   jam: string;
   nama: string;
   lokasi: string;
@@ -15,12 +15,13 @@ export type ArchiveItem = {
   tanggal: string; // YYYY-MM-DD
   ringkas: string;
   isi: string[];
+  foto?: string[]; // opsional — path gambar dokumentasi, taruh file-nya di /public
 };
 
 export const EVENTS: EventItem[] = [
   {
     id: 'tenun-2026-07',
-    tanggal: '2026-07-10',
+    tanggal: '2026-07-11',
     jam: '19:00 WITA',
     nama: 'TENUN Bulanan',
     lokasi: 'Kedai Kopi Gatenine, Manado',
@@ -38,6 +39,30 @@ export const EVENTS: EventItem[] = [
 
 export const ARCHIVES: ArchiveItem[] = [
   {
+    // Slug ini SENGAJA dibuat sama persis dengan hasil otomatis dari
+    // convertPastEventsToArchives() untuk entri 'TENUN Bulanan' tanggal
+    // 2026-07-11 (polanya: slugify(nama)-tanggal). Kalau nama atau
+    // tanggal event TENUN di EVENTS berubah lagi nanti, slug di sini
+    // HARUS ikut disesuaikan juga, kalau tidak versi kurasi manual ini
+    // tidak akan menggantikan versi generik, dan malah muncul dobel.
+    slug: 'tenun-bulanan-2026-07-11',
+    judul: 'TENUN Juli 2026',
+    tanggal: '2026-07-11',
+    ringkas: 'Dialog lintas iman bertema Muharram — esensi Tahun Baru Islam dan relevansinya bagi semua orang, dihadiri peserta Muslim, Kristen, dan elder Gereja Mormon.',
+    isi: [
+      'Materi utama membahas esensi Tahun Baru Islam (Muharram): mengapa umat Muslim punya penanggalan tahun baru sendiri, sistemnya, dan relevansinya bagi siapa pun lepas dari latar belakang agama.',
+      'Sesi tanya jawab dari peserta Kristen berlangsung dua babak: babak pertama seputar materi, babak kedua pertanyaan bebas.',
+      'Diselingi sesi permainan sebelum dan sesudah diskusi untuk mencairkan suasana antar peserta lintas agama.',
+      'Dihadiri peserta dalam jumlah cukup banyak, dari latar belakang Muslim, Kristen, dan beberapa elder dari Gereja Mormon.',
+      '"Saya sadar bahwa wadah ini sangat diperlukan untuk diskusi iman yang berbeda, karena kalau misalnya dua organisasi Muslim dan Kristen membuat forum begini mungkin akan ada perdebatan karena berasal dari dua wadah berbeda dengan visi misi berbeda. Tapi BMC adalah satu komunitas dengan visi yang sama sehingga mencegah hal itu." — salah satu peserta',
+    ],
+    foto: [
+      '/tenun new.jpeg',
+      '/games tenun.jpeg',
+      '/ten.JPG',
+    ],
+  },
+  {
     slug: 'tenun-juni-2026',
     judul: 'TENUN Juni 2026',
     tanggal: '2026-06-13',
@@ -46,17 +71,6 @@ export const ARCHIVES: ArchiveItem[] = [
       'Peserta berbagi pengalaman membangun ruang aman di lingkungan masing-masing.',
       'Diskusi menyorot pentingnya mendengar aktif sebelum merespons.',
       'Tindak lanjut: sesi mentoring kecil untuk anggota baru.',
-    ],
-  },
-  {
-    slug: 'anyaman-juni-2026',
-    judul: 'ANYAMAN Juni 2026',
-    tanggal: '2026-06-27',
-    ringkas: 'Sesi ekspresi kreatif dan refleksi.',
-    isi: [
-      'Anggota menampilkan karya puisi dan musik.',
-      'Refleksi bersama tentang keberanian berekspresi.',
-      'Tindak lanjut: pameran mini karya komunitas bulan depan.',
     ],
   },
 ];
@@ -70,10 +84,17 @@ function slugify(input: string) {
     .replace(/\s+/g, '-');
 }
 
+// Cek apakah string berformat tanggal YYYY-MM-DD yang valid.
+// Dipakai supaya nilai placeholder seperti 'Coming Soon' tidak ikut
+// dianggap sebagai tanggal beneran saat dibandingkan.
+function isValidDateString(value: string): boolean {
+  return /^\d{4}-\d{2}-\d{2}$/.test(value);
+}
+
 export function getNearestEvent(now = new Date()): EventItem | null {
   const today = now.toISOString().slice(0, 10);
   const upcoming = EVENTS
-    .filter((e) => e.tanggal >= today)
+    .filter((e) => isValidDateString(e.tanggal) && e.tanggal >= today)
     .sort((a, b) => a.tanggal.localeCompare(b.tanggal));
 
   return upcoming[0] ?? null;
@@ -82,7 +103,7 @@ export function getNearestEvent(now = new Date()): EventItem | null {
 export function getPastEvents(now = new Date()): EventItem[] {
   const today = now.toISOString().slice(0, 10);
   return EVENTS
-    .filter((e) => e.tanggal < today)
+    .filter((e) => isValidDateString(e.tanggal) && e.tanggal < today)
     .sort((a, b) => b.tanggal.localeCompare(a.tanggal));
 }
 
@@ -104,8 +125,10 @@ export function getCombinedArchives(now = new Date()): ArchiveItem[] {
   const autoArchives = convertPastEventsToArchives(getPastEvents(now));
   const map = new Map<string, ArchiveItem>();
 
+  // ARCHIVES manual ditaruh belakangan supaya menimpa versi otomatis
+  // kalau slug-nya sama (prioritas ke data yang sudah dikurasi manual).
   for (const item of [...autoArchives, ...ARCHIVES]) {
-    if (!map.has(item.slug)) map.set(item.slug, item);
+    map.set(item.slug, item);
   }
 
   return Array.from(map.values()).sort((a, b) => b.tanggal.localeCompare(a.tanggal));
@@ -114,4 +137,9 @@ export function getCombinedArchives(now = new Date()): ArchiveItem[] {
 export function getLatestArchive(now = new Date()): ArchiveItem | null {
   const all = getCombinedArchives(now);
   return all.length ? all[0] : null;
+}
+
+// Ambil beberapa arsip terbaru sekaligus — dipakai untuk galeri dokumentasi di homepage.
+export function getRecentArchives(count = 3, now = new Date()): ArchiveItem[] {
+  return getCombinedArchives(now).slice(0, count);
 }

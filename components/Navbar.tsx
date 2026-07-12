@@ -114,9 +114,10 @@ export default function Navbar() {
   return (
     <header
       className={cn(
-        'fixed top-0 left-0 right-0 z-[9999] flex items-center justify-between',
+        'fixed left-0 right-0 z-[9999] flex items-center justify-between',
+        'top-[var(--bmc-banner-h,0px)]',
         'px-4 py-3 sm:px-6 sm:py-4',
-        'pointer-events-none transition-[transform,opacity] duration-[450ms] ease-[cubic-bezier(0.16,1,0.3,1)]',
+        'pointer-events-none transition-[top,transform,opacity] duration-[450ms] ease-[cubic-bezier(0.16,1,0.3,1)]',
         hidden ? '-translate-y-[120%] opacity-0' : 'translate-y-0 opacity-100'
       )}
     >
