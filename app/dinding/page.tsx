@@ -323,7 +323,6 @@ export default function DindingPage() {
 
           {/* Masonry layout menggunakan CSS columns */}
           <div
-            className="gap-4 sm:gap-5"
             style={{
               columnCount: 1,
             }}
