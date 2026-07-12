@@ -327,13 +327,7 @@ export default function DindingPage() {
             style={{
               columnCount: 1,
             }}
-            className="
-              columns-1
-              sm:columns-2
-              lg:columns-3
-              gap-4
-              sm:gap-5
-            "
+            className="columns-1 sm:columns-2 lg:columns-3 gap-4 sm:gap-5"
           >
             {threads.map((t) => (
               <ThreadCard key={t.id} thread={t} />
