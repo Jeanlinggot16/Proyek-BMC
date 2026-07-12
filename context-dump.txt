@@ -83,34 +83,50 @@ function ArchiveCard({ item }: { item: ReturnType<typeof getCombinedArchives>[nu
   return (
     <Link
       href={`/arsip/${item.slug}`}
-      className="group relative rounded-xl border border-white/5 bg-[#0D0D0D]/80 backdrop-blur-sm p-6 hover:border-[#D4AF37]/40 hover:bg-[#0D0D0D] transition-all duration-300 flex flex-col h-full"
+      className="group relative rounded-xl border border-white/5 bg-[#0D0D0D]/80 backdrop-blur-sm overflow-hidden hover:border-[#D4AF37]/40 hover:bg-[#0D0D0D] transition-all duration-300 flex flex-col h-full"
     >
-      {/* Tanggal badge */}
-      <span className="inline-flex items-center gap-1.5 self-start text-[11px] font-bold tracking-[0.08em] uppercase text-[#D4AF37] bg-[#D4AF37]/10 px-2.5 py-1 rounded-full mb-4">
-        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-        {item.tanggal}
-      </span>
+      {/* Thumbnail — cuma tampil kalau arsip ini punya foto dokumentasi */}
+      {item.foto && item.foto.length > 0 && (
+        <div className="relative aspect-[16/9] overflow-hidden">
+          <img
+            src={item.foto[0]}
+            alt=""
+            aria-hidden="true"
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            loading="lazy"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0D0D0D] via-transparent to-transparent" />
+        </div>
+      )}
 
-      {/* Judul */}
-      <h2 className="font-bold text-[#F5F5F5] text-lg mb-2.5 group-hover:text-white transition-colors leading-snug">
-        {item.judul}
-      </h2>
-
-      {/* Ringkasan */}
-      <p className="text-sm text-[#9A9AA5] leading-relaxed line-clamp-3 flex-1">
-        {item.ringkas}
-      </p>
-
-      {/* Read more indicator */}
-      <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between">
-        <span className="text-[11px] text-[#D4AF37] font-medium tracking-wide opacity-0 group-hover:opacity-100 transition-opacity duration-300 translate-x-0 group-hover:translate-x-1 transition-transform">
-          Baca selengkapnya →
+      <div className="p-6 flex flex-col flex-1">
+        {/* Tanggal badge */}
+        <span className="inline-flex items-center gap-1.5 self-start text-[11px] font-bold tracking-[0.08em] uppercase text-[#D4AF37] bg-[#D4AF37]/10 px-2.5 py-1 rounded-full mb-4">
+          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          {item.tanggal}
         </span>
-        <span className="text-[10px] text-[#8A8A94] font-medium uppercase tracking-wider">
-          Arsip
-        </span>
+
+        {/* Judul */}
+        <h2 className="font-bold text-[#F5F5F5] text-lg mb-2.5 group-hover:text-white transition-colors leading-snug">
+          {item.judul}
+        </h2>
+
+        {/* Ringkasan */}
+        <p className="text-sm text-[#9A9AA5] leading-relaxed line-clamp-3 flex-1">
+          {item.ringkas}
+        </p>
+
+        {/* Read more indicator */}
+        <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between">
+          <span className="text-[11px] text-[#D4AF37] font-medium tracking-wide opacity-0 group-hover:opacity-100 transition-opacity duration-300 translate-x-0 group-hover:translate-x-1 transition-transform">
+            Baca selengkapnya →
+          </span>
+          <span className="text-[10px] text-[#8A8A94] font-medium uppercase tracking-wider">
+            Arsip
+          </span>
+        </div>
       </div>
     </Link>
   );
@@ -367,24 +383,51 @@ export default function ArsipPage() {
   );
 }
 
-
 ============================================================
 FILE: app\arsip\[slug]\page.tsx
 ============================================================
 import { notFound } from 'next/navigation';
-import { ARCHIVES } from '@/constants/communityData';
+import Link from 'next/link';
+import { getCombinedArchives } from '@/constants/communityData';
 
 export default async function ArsipDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const item = ARCHIVES.find((x) => x.slug === slug);
+  // Sebelumnya cuma cek array ARCHIVES manual, jadi arsip yang dibuat
+  // otomatis dari EVENTS yang sudah lewat (lewat getCombinedArchives)
+  // selalu 404 kalau diklik dari halaman /arsip. Sekarang dicek dari
+  // gabungan otomatis + manual, sama seperti yang dipakai listing-nya.
+  const item = getCombinedArchives().find((x) => x.slug === slug);
 
   if (!item) notFound();
 
   return (
     <section className="max-w-3xl mx-auto px-6 py-16">
+      <Link
+        href="/arsip"
+        className="inline-flex items-center gap-1.5 text-[11px] font-bold tracking-[0.1em] uppercase text-[#D4AF37] hover:text-[#F5F5F5] transition-colors duration-300 no-underline mb-6"
+      >
+        ← Kembali ke Arsip
+      </Link>
+
       <p className="text-xs text-[#D4AF37] mb-2">{item.tanggal}</p>
-      <h1 className="text-3xl font-bold mb-4">{item.judul}</h1>
+      <h1 className="text-3xl font-bold mb-4 text-[#F5F5F5] font-serif">{item.judul}</h1>
       <p className="text-zinc-300 leading-relaxed mb-6">{item.ringkas}</p>
+
+      {/* Galeri foto dokumentasi — cuma tampil kalau field foto diisi */}
+      {item.foto && item.foto.length > 0 && (
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-8">
+          {item.foto.map((src, idx) => (
+            <div key={idx} className="relative aspect-square rounded-xl overflow-hidden border border-white/10">
+              <img
+                src={src}
+                alt={`Dokumentasi ${item.judul} ${idx + 1}`}
+                className="w-full h-full object-cover"
+                loading="lazy"
+              />
+            </div>
+          ))}
+        </div>
+      )}
 
       <ul className="list-disc pl-5 space-y-2 text-zinc-300">
         {item.isi.map((poin, idx) => (
@@ -1267,17 +1310,10 @@ export default function DindingPage() {
 
           {/* Masonry layout menggunakan CSS columns */}
           <div
-            className="gap-4 sm:gap-5"
             style={{
               columnCount: 1,
             }}
-            className="
-              columns-1
-              sm:columns-2
-              lg:columns-3
-              gap-4
-              sm:gap-5
-            "
+            className="columns-1 sm:columns-2 lg:columns-3 gap-4 sm:gap-5"
           >
             {threads.map((t) => (
               <ThreadCard key={t.id} thread={t} />
@@ -1382,7 +1418,7 @@ body {
   background-repeat: no-repeat;
 }
 
-/* ─── 6. Efek Pendaran (Glow Effects) — Lebih Hangat ─────────────────────── */
+/* ─── 6. Efek Pendaran & Animasi Kustom ────────────────────────────────────── */
 .shadow-glow-red {
   box-shadow: 0 0 30px rgba(192, 57, 43, 0.25);
 }
@@ -1404,9 +1440,7 @@ body {
     0 0 40px rgba(212, 175, 55, 0.10);
 }
 
-/* ─── 7. Animasi Kustom ───────────────────────────────────────────────────── */
-
-/* 7a. Fade In & Slide Up */
+/* 6a. Keyframes */
 @keyframes fadeInUp {
   from {
     opacity:   0;
@@ -1418,41 +1452,49 @@ body {
   }
 }
 
-.animate-fadeIn {
-  animation: fadeInUp 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-/* 7b. Floating / Melayang */
 @keyframes float {
   0%   { transform: translateY(0px)   rotate(0deg); }
   50%  { transform: translateY(-12px) rotate(1deg); }
   100% { transform: translateY(0px)   rotate(0deg); }
 }
 
-.animate-float {
-  animation: float 6s ease-in-out infinite;
-}
-
-/* 7c. Warm Pulse — seperti detak jantung */
 @keyframes warmPulse {
   0%, 100% { box-shadow: 0 0 20px rgba(192,57,43,0.3); }
   50%      { box-shadow: 0 0 35px rgba(192,57,43,0.5), 0 0 60px rgba(212,175,55,0.2); }
+}
+
+@keyframes logoTraceAnimation {
+  0%   { stroke-dashoffset: 200; }
+  100% { stroke-dashoffset: 0; }
+}
+
+/* 6b. Kelas Animasi */
+.animate-fadeIn {
+  animation: fadeInUp 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
 }
 
 .animate-warm-pulse {
   animation: warmPulse 3s ease-in-out infinite;
 }
 
-/* 7d. Transisi Premium */
 .transition-premium {
   transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* 7e. Kilau benang menyapu (shine sweep) saat hover */
+.bmc-logo-trace {
+  animation: logoTraceAnimation 4.5s linear infinite;
+}
+
+/* 6c. Efek Kilau Sapuan (Shine Sweep) */
 .bmc-shine {
   position: relative;
   overflow: hidden;
 }
+
 .bmc-shine::after {
   content: '';
   position: absolute;
@@ -1470,51 +1512,12 @@ body {
   transition: left 0.6s cubic-bezier(0.16, 1, 0.3, 1);
   pointer-events: none;
 }
+
 .bmc-shine:hover::after {
   left: 130%;
 }
 
-/* 7f. Animasi global */
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50%      { opacity: 0.4; }
-}
-
-@keyframes logoTraceAnimation {
-  0%   { stroke-dashoffset: 200; }
-  100% { stroke-dashoffset: 0; }
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(360deg); }
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
-
-@keyframes overlayFade {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
-
-@keyframes panelDropIn {
-  from { opacity: 0; transform: translateY(-12px) scale(0.98); }
-  to   { opacity: 1; transform: translateY(0) scale(1); }
-}
-
-@keyframes panelItemIn {
-  from { opacity: 0; transform: translateX(-8px); }
-  to   { opacity: 1; transform: translateX(0); }
-}
-
-.bmc-logo-trace {
-  animation: logoTraceAnimation 4.5s linear infinite;
-}
-
-/* ─── 8. Sistem Design Token (Shadcn / Tailwind) ─────────────────────────── */
+/* ─── 7. Sistem Design Token (Shadcn / Tailwind v4) ─────────────────────── */
 @theme inline {
   /* Tipografi */
   --font-heading: var(--font-sans);
@@ -1567,7 +1570,7 @@ body {
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-/* ─── 9. Variabel CSS — Mode Terang (Light Mode) ────────────────────────── */
+/* ─── 8. Variabel CSS — Mode Terang (Light Mode) ────────────────────────── */
 :root {
   --radius: 0.625rem;
 
@@ -1599,7 +1602,7 @@ body {
   --ring:              oklch(0.708 0 0);
 }
 
-/* ─── 10. Variabel CSS — Mode Gelap (Dark Mode) ──────────────────────────── */
+/* ─── 9. Variabel CSS — Mode Gelap (Dark Mode) ──────────────────────────── */
 .dark {
   --background:        oklch(0.145 0 0);
   --foreground:        oklch(0.985 0 0);
@@ -1629,7 +1632,7 @@ body {
   --ring:              oklch(0.556 0 0);
 }
 
-/* ─── 11. Layer Basis (Base Layer) ───────────────────────────────────────── */
+/* ─── 10. Layer Basis (Base Layer) ───────────────────────────────────────── */
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -1644,7 +1647,9 @@ body {
   }
 }
 
-/* ─── 12. Utility Placeholder ────────────────────────────────────────────── */
+/* ─── 11. Direktif Utilitas Tailwind v4 Custom (@utility) ────────────────── */
+
+/* 11a. Utilitas Bawaan BMC */
 @utility placeholder-bmc {
   &::placeholder {
     color: var(--color-bmc-text-placeholder);
@@ -1652,7 +1657,6 @@ body {
   }
 }
 
-/* ─── 13. Focus Ring Custom BMC ───────────────────────────────────────────── */
 @utility focus-ring-bmc {
   &:focus-visible {
     outline: none;
@@ -1661,12 +1665,10 @@ body {
   }
 }
 
-/* ─── 14. Animasi Fade In Up ──────────────────────────────────────────────── */
 @utility animate-fadeInUp {
   animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* ─── 15. Shadow BMC ──────────────────────────────────────────────────────── */
 @utility shadow-bmc-card {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
 }
@@ -1679,6 +1681,39 @@ body {
   box-shadow: 0 0 32px rgba(192, 57, 43, 0.45);
 }
 
+/* 11b. Pola Latar Bertekstur (Integrasi Claude & Peningkatan Standar v4) */
+@utility bg-pattern-thread {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='72' height='72' viewBox='0 0 24 24' fill='none' stroke='%23D4AF37' stroke-width='0.7' stroke-opacity='0.05'%3E%3Ccircle cx='12' cy='12' r='6.5'/%3E%3Cpath d='M6 12c1.8-2.6 3.6-2.6 5.5 0s3.7 2.6 5.5 0'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 72px 72px;
+}
+
+@utility bg-pattern-dialog {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 24 24' fill='none' stroke='%23FFFFFF' stroke-width='0.7' stroke-opacity='0.04'%3E%3Cpath d='M4 5.5h9v6H8l-2.5 2.5v-2.5H4z'/%3E%3Cpath d='M12 9.5h8v5.5h-1.8v2.5l-2.5-2.5H12z'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 80px 80px;
+}
+
+@utility bg-pattern-weave {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 24 24' fill='none' stroke='%23C0392B' stroke-width='0.7' stroke-opacity='0.05'%3E%3Cpath d='M4 8c4 0 4 8 8 8s4-8 8-8'/%3E%3Cpath d='M4 16c4 0 4-8 8-8s4 8 8 8'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 64px 64px;
+}
+
+/* 11c. Efek Transisi Latar & Interaktif Lanjutan */
+@utility mask-gradient-b {
+  mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 85%, rgba(0,0,0,0) 100%);
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 85%, rgba(0,0,0,0) 100%);
+}
+
+@utility bmc-card-interactive {
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  &:hover {
+    transform: translateY(-4px);
+    border-color: var(--color-bmc-border-hover);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5), 0 0 25px rgba(212, 175, 55, 0.05);
+  }
+}
 
 ============================================================
 FILE: app\kegiatan\cara-ikut\page.tsx
@@ -2510,7 +2545,7 @@ FILE: app\page.tsx
 import { useEffect, useRef, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { SLIDES, STATS, PROGRAMS, TESTIMONIALS, PROG_COLOR } from '@/constants/data';
-import { getNearestEvent, getLatestArchive } from '@/constants/communityData';
+import { getNearestEvent, getLatestArchive, getRecentArchives } from '@/constants/communityData';
 import useScrollReveal from '@/hooks/useScrollReveal';
 import useCountUp from '@/hooks/useCountUp';
 import InteractiveWeaveCanvas from '@/components/ui/InteractiveWeaveCanvas';
@@ -2549,6 +2584,51 @@ function StatItem({ value, label, delay, start }: { value: string; label: string
   );
 }
 
+/* ─── Sub-komponen Kartu Dokumentasi (homepage) ─────────────────────────── */
+function DocCard({ item, delay, visible }: { item: ReturnType<typeof getRecentArchives>[number]; delay: number; visible: boolean }) {
+  const hasFoto = item.foto && item.foto.length > 0;
+
+  return (
+    <Link
+      href={`/arsip/${item.slug}`}
+      className={cn(
+        'group relative rounded-2xl overflow-hidden bg-[#100E0C] border border-white/5 hover:border-[#D4AF37]/30 transition-all duration-500 no-underline flex flex-col',
+        visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
+      )}
+      style={{ transitionDelay: `${delay}ms` }}
+    >
+      <div className="relative aspect-[4/3] overflow-hidden bg-[#0A0806]">
+        {hasFoto ? (
+          <img
+            src={item.foto![0]}
+            alt=""
+            aria-hidden="true"
+            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+            loading="lazy"
+          />
+        ) : (
+          // Fallback kalau arsip ini belum ada fotonya — tetap tampil rapi, tidak kosong
+          <div className="w-full h-full flex items-center justify-center">
+            <span className="text-[10px] font-bold tracking-[0.15em] uppercase text-[#8A8A94]">Dokumentasi</span>
+          </div>
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0C0A08]/95 via-[#0C0A08]/10 to-transparent" />
+        <span className="absolute bottom-3 left-4 text-[10px] font-bold tracking-[0.1em] uppercase text-[#D4AF37]">
+          {item.tanggal}
+        </span>
+      </div>
+      <div className="p-5">
+        <h3 className="text-base font-bold font-serif text-[#F5F5F5] mb-1.5 group-hover:text-white transition-colors leading-snug">
+          {item.judul}
+        </h3>
+        <p className="text-[13px] text-[#9A9AA5] leading-relaxed line-clamp-2">
+          {item.ringkas}
+        </p>
+      </div>
+    </Link>
+  );
+}
+
 export default function HomePage() {
   const [activeSlide, setActiveSlide] = useState(0);
   const [mounted, setMounted] = useState(false);
@@ -2558,12 +2638,14 @@ export default function HomePage() {
 
   const { ref: statsRef, visible: statsVisible } = useScrollReveal();
   const { ref: introRef, visible: introVisible } = useScrollReveal();
+  const { ref: docsRef, visible: docsVisible } = useScrollReveal();
   const { ref: progTeaserRef, visible: progTeaserVisible } = useScrollReveal();
   const { ref: testimonialRef, visible: testimonialVisible } = useScrollReveal();
   const { ref: ctaRef, visible: ctaVisible } = useScrollReveal();
 
   const nearest = getNearestEvent();
   const latestArchive = getLatestArchive();
+  const recentDocs = getRecentArchives(3);
 
   /* ─── Timer Logic ─────────────────────────────────────────────────────── */
   const clearTimer = useCallback(() => {
@@ -2585,7 +2667,7 @@ export default function HomePage() {
     isMountedRef.current = true;
     const t = setTimeout(() => setMounted(true), 100);
     startTimer();
-    
+
     return () => {
       isMountedRef.current = false;
       clearTimeout(t);
@@ -2606,15 +2688,15 @@ export default function HomePage() {
       <section className="relative min-h-[calc(100vh-70px)] flex flex-col justify-center items-center px-5 pt-24 pb-10 sm:px-6 sm:pt-28 sm:pb-12 overflow-hidden">
         {/* Background Image */}
         <div className="absolute inset-0 z-0">
-          <img 
-            src="/hero-bg.jpeg" 
-            alt="" 
+          <img
+            src="/hero-bg.jpeg"
+            alt=""
             aria-hidden="true"
             className="w-full h-full object-cover"
             loading="eager"
           />
           {/* Radial vignette — foto TERLIHAT di tengah, gelap hanya di pinggir */}
-          <div 
+          <div
             className="absolute inset-0"
             style={{
               background: `
@@ -2684,8 +2766,8 @@ export default function HomePage() {
                   aria-hidden={!isCurrent}
                   className={cn(
                     'transition-all duration-1200 ease-out-expo',
-                    isCurrent 
-                      ? 'relative opacity-100 translate-y-0 scale-100' 
+                    isCurrent
+                      ? 'relative opacity-100 translate-y-0 scale-100'
                       : 'absolute inset-0 opacity-0 translate-y-6 scale-95 pointer-events-none'
                   )}
                 >
@@ -2730,8 +2812,8 @@ export default function HomePage() {
                 aria-label={`Pindah ke slide ${idx + 1}`}
                 className={cn(
                   'h-1 rounded-full border-none cursor-pointer p-0 transition-all duration-450 ease-out-expo',
-                  idx === activeSlide 
-                    ? 'w-8 bg-[#C0392B] shadow-[0_0_10px_rgba(192,57,43,0.5)]' 
+                  idx === activeSlide
+                    ? 'w-8 bg-[#C0392B] shadow-[0_0_10px_rgba(192,57,43,0.5)]'
                     : 'w-2 bg-white/10 hover:bg-white/20'
                 )}
               />
@@ -2748,7 +2830,7 @@ export default function HomePage() {
 
       {/* ─── STATS (Floating Card) ────────────────────────────────────────── */}
       <div className="relative z-20 px-4 -mt-10 sm:-mt-14 max-w-5xl mx-auto">
-        <div 
+        <div
           ref={statsRef}
           className="grid grid-cols-2 md:grid-cols-4 rounded-2xl border border-white/10 bg-[#100E0C]/95 backdrop-blur-xl shadow-[0_20px_50px_rgba(0,0,0,0.8)] overflow-hidden"
         >
@@ -2758,17 +2840,17 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* ─── INTRO / SIAPA KAMI — DENGAN FOTO KOMUNITAS ───────────────────── */}
+      {/* ─── INTRO / SIAPA KAMI — DIPANGKAS, FOKUS KE FOTO ────────────────── */}
       <section ref={introRef} className="relative z-10 px-5 py-16 sm:px-6 sm:py-20 md:py-24 max-w-[1100px] mx-auto">
         {/* Warm ambient glow */}
-        <div 
+        <div
           aria-hidden="true"
           className="absolute top-0 left-1/4 w-[600px] h-[400px] pointer-events-none"
           style={{ background: 'radial-gradient(ellipse, rgba(212,175,55,0.06) 0%, rgba(192,57,43,0.03) 40%, transparent 70%)', filter: 'blur(80px)' }}
         />
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-12 items-center">
-          {/* Left Column */}
+          {/* Left Column — teks dipangkas jadi satu paragraf singkat, sisanya sudah lengkap di /tentang */}
           <div>
             <SectionLabel>Siapa Kami?</SectionLabel>
             <h2
@@ -2781,32 +2863,21 @@ export default function HomePage() {
               Komunitas yang Merajut <br />
               <span className="text-[#C0392B]">Persaudaraan Lintas Batas</span>
             </h2>
-            <p 
+            <p
               className={cn(
-                'text-sm text-[#B8B8C0] leading-relaxed mb-5 transition-all duration-800 ease-out-expo',
+                'text-sm text-[#B8B8C0] leading-relaxed mb-8 transition-all duration-800 ease-out-expo',
                 introVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
               )}
               style={{ transitionDelay: '160ms' }}
             >
-              Benang Merah Community lahir dari keyakinan sederhana di Manado: di tengah dunia yang makin terpisah-pisah, persaudaraan sejati bukan tentang menjadi sama, tapi tentang{' '}
-              merajut perbedaan menjadi kekuatan.
-
+              Ruang dialog inklusif bagi pemuda Sulawesi Utara untuk merajut perbedaan menjadi kekuatan, tanpa sekat prasangka.
             </p>
-            <p 
-              className={cn(
-                'text-sm text-[#A0A0AA] leading-relaxed mb-8 transition-all duration-800 ease-out-expo',
-                introVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
-              )}
-              style={{ transitionDelay: '240ms' }}
-            >
-              Kami memfasilitasi ruang dialog sehat tanpa sekat prasangka dan kecurigaan.
-            </p>
-            <div 
+            <div
               className={cn(
                 'transition-all duration-800 ease-out-expo',
                 introVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
               )}
-              style={{ transitionDelay: '320ms' }}
+              style={{ transitionDelay: '240ms' }}
             >
               <Link
                 href="/tentang"
@@ -2818,7 +2889,7 @@ export default function HomePage() {
           </div>
 
           {/* Right Column — FOTO KOMUNITAS + QUOTE */}
-          <div 
+          <div
             className={cn(
               'relative transition-all duration-800 ease-out-expo',
               introVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
@@ -2827,14 +2898,14 @@ export default function HomePage() {
           >
             <div className="relative rounded-3xl overflow-hidden border border-white/10 h-full min-h-[380px] group">
               {/* Foto kegiatan — diskusi atau pengukuhan */}
-              <img 
-                src="/diskusi.jpg" 
+              <img
+                src="/diskusi.jpg"
                 alt="Anggota Benang Merah Community berdiskusi dengan hangat"
                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
               />
               {/* Gradient overlay — gelap hanya di bawah untuk teks */}
               <div className="absolute inset-0 bg-gradient-to-t from-[#0C0A08]/90 via-[#0C0A08]/15 to-transparent" />
-              
+
               {/* Quote overlay di bottom */}
               <div className="absolute bottom-0 left-0 right-0 p-7 sm:p-9">
                 <p className="text-[#E8E6E0] text-base sm:text-lg italic font-serif leading-relaxed mb-3">
@@ -2843,8 +2914,8 @@ export default function HomePage() {
                 <div className="flex items-center gap-3">
                   {/* Foto member tersenyum */}
                   <div className="w-10 h-10 rounded-full overflow-hidden border border-[#D4AF37]/30">
-                    <img 
-                      src="/arthur.JPG" 
+                    <img
+                      src="/arthur.JPG"
                       alt="Member tersenyum"
                       className="w-full h-full object-cover"
                     />
@@ -2855,7 +2926,7 @@ export default function HomePage() {
                   </div>
                 </div>
               </div>
-              
+
               {/* Gold accent line */}
               <div className="absolute top-4 left-7 right-7 h-px bg-gradient-to-r from-transparent via-[#D4AF37]/20 to-transparent" />
             </div>
@@ -2863,11 +2934,47 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* ─── DOKUMENTASI TERBARU — GALERI DARI ARSIP ──────────────────────── */}
+      <Divider />
+      <section ref={docsRef} className="relative z-10 px-5 py-16 sm:px-6 sm:py-20 md:py-24 bg-pattern-thread">
+        <div className="max-w-[1100px] mx-auto">
+          <div
+            className={cn(
+              'flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-10 sm:mb-12 transition-all duration-800 ease-out-expo',
+              docsVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
+            )}
+          >
+            <div>
+              <SectionLabel gold>Dokumentasi</SectionLabel>
+              <h2 className="text-[1.7rem] sm:text-[2.1rem] md:text-[2.5rem] font-bold font-serif text-[#F5F5F5]">
+                Jejak Kegiatan Terbaru
+              </h2>
+            </div>
+            <Link
+              href="/arsip"
+              className="text-[11px] font-bold text-[#D4AF37] tracking-[0.1em] uppercase pb-1 border-b border-[#D4AF37]/30 hover:border-[#D4AF37] transition-colors duration-300 no-underline whitespace-nowrap"
+            >
+              Lihat Semua Arsip &rarr;
+            </Link>
+          </div>
+
+          {recentDocs.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {recentDocs.map((item, i) => (
+                <DocCard key={item.slug} item={item} delay={i * 120} visible={docsVisible} />
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-[#8A8A94] text-center py-10">Belum ada dokumentasi kegiatan.</p>
+          )}
+        </div>
+      </section>
+
       {/* ─── PROGRAM TEASER ───────────────────────────────────────────────── */}
       <Divider />
-      <section ref={progTeaserRef} className="relative z-10 px-5 py-16 sm:px-6 sm:py-20 md:py-24 bg-white/[0.01]">
+      <section ref={progTeaserRef} className="relative z-10 px-5 py-16 sm:px-6 sm:py-20 md:py-24 bg-white/[0.01] bg-pattern-dialog">
         <div className="max-w-[1100px] mx-auto">
-          <div 
+          <div
             className={cn(
               'text-center mb-12 sm:mb-14 transition-all duration-800 ease-out-expo',
               progTeaserVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
@@ -2898,7 +3005,7 @@ export default function HomePage() {
                   <div className="absolute top-0 right-0 w-32 h-32 rounded-bl-2xl opacity-[0.03] pointer-events-none"
                     style={{ background: `radial-gradient(circle at top right, ${c.tag}, transparent 70%)` }}
                   />
-                  
+
                   <ProgramCardImage program={p} isHovered={false} />
                   <div className="flex justify-between items-start mb-4">
                     <span className="text-[10px] font-bold tracking-[0.12em]" style={{ color: c.tag }}>{p.focus}</span>
@@ -2920,7 +3027,7 @@ export default function HomePage() {
             })}
           </div>
 
-          <div 
+          <div
             className={cn(
               'text-center mt-10 sm:mt-12 transition-all duration-800 ease-out-expo',
               progTeaserVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
@@ -2939,16 +3046,16 @@ export default function HomePage() {
 
       {/* ─── TESTIMONIAL — WARM & PERSONAL ────────────────────────────────── */}
       <Divider />
-      <section ref={testimonialRef} className="relative z-10 px-5 py-16 sm:px-6 sm:py-20 md:py-24">
+      <section ref={testimonialRef} className="relative z-10 px-5 py-16 sm:px-6 sm:py-20 md:py-24 bg-pattern-weave">
         {/* Warm ambient glow di belakang */}
-        <div 
+        <div
           aria-hidden="true"
           className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[300px] rounded-full pointer-events-none"
           style={{ background: 'radial-gradient(ellipse, rgba(212,175,55,0.05) 0%, rgba(192,57,43,0.03) 40%, transparent 70%)', filter: 'blur(80px)' }}
         />
-        
+
         <div className="max-w-[800px] mx-auto text-center">
-          <div 
+          <div
             className={cn(
               'transition-all duration-800 ease-out-expo',
               testimonialVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
@@ -2960,7 +3067,7 @@ export default function HomePage() {
             </h2>
           </div>
 
-          <div 
+          <div
             className={cn(
               'relative min-h-[280px] sm:min-h-[260px] flex items-center justify-center transition-all duration-800 ease-out-expo',
               testimonialVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
@@ -2974,8 +3081,8 @@ export default function HomePage() {
                   key={idx}
                   className={cn(
                     'transition-all duration-500 ease-out-expo',
-                    isCurrent 
-                      ? 'relative opacity-100 scale-100' 
+                    isCurrent
+                      ? 'relative opacity-100 scale-100'
                       : 'absolute inset-0 opacity-0 scale-95 pointer-events-none'
                   )}
                 >
@@ -2988,7 +3095,7 @@ export default function HomePage() {
                       {t.quote}
                     </blockquote>
                   </div>
-                  
+
                   {/* Author dengan avatar */}
                   <div className="flex items-center justify-center gap-3">
                     <div
@@ -3012,7 +3119,7 @@ export default function HomePage() {
           </div>
 
           {/* Dots Navigation */}
-          <div 
+          <div
             className={cn(
               'flex justify-center gap-2.5 mt-8 transition-all duration-800 ease-out-expo',
               testimonialVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
@@ -3026,8 +3133,8 @@ export default function HomePage() {
                 aria-label={`Testimoni ${i + 1}`}
                 className={cn(
                   'w-2.5 h-2.5 rounded-full border-none cursor-pointer p-0 transition-all duration-300',
-                  i === activeTestimonial 
-                    ? 'bg-[#C0392B] scale-110' 
+                  i === activeTestimonial
+                    ? 'bg-[#C0392B] scale-110'
                     : 'bg-white/10 hover:bg-white/20'
                 )}
               />
@@ -3043,13 +3150,13 @@ export default function HomePage() {
         className="relative z-10 px-5 py-16 sm:px-6 sm:py-20 md:py-24 text-center bg-gradient-to-b from-transparent via-[#C0392B]/[0.03] to-transparent"
       >
         {/* Warm glow */}
-        <div 
+        <div
           aria-hidden="true"
           className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[300px] rounded-full pointer-events-none"
           style={{ background: 'radial-gradient(ellipse, rgba(212,175,55,0.08) 0%, transparent 70%)', filter: 'blur(60px)' }}
         />
-        
-        <div 
+
+        <div
           className={cn(
             'max-w-[600px] mx-auto transition-all duration-800 ease-out-expo',
             ctaVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
@@ -3062,7 +3169,7 @@ export default function HomePage() {
           <p className="text-sm text-[#B8B8C0] leading-relaxed mb-9 sm:mb-10">
             Kami selalu menyediakan tempat duduk dan kopi hangat bagi siapa pun yang ingin ngobrol dengan terbuka di Manado.
           </p>
-          
+
           {/* Tombol dengan warm pulse */}
           <Link
             href="/daftar"
@@ -3070,7 +3177,7 @@ export default function HomePage() {
           >
             Isi Formulir Bergabung &rarr;
           </Link>
-          
+
           {/* Subtle invitation text */}
           <p className="text-[11px] text-[#A0A0AA] mt-5 italic">
             Atau cukup datang dan ngobrol — pintu kami selalu terbuka.
@@ -3080,7 +3187,6 @@ export default function HomePage() {
     </main>
   );
 }
-
 
 ============================================================
 FILE: app\page_lama.tsx
@@ -6860,7 +6966,7 @@ FILE: constants\communityData.ts
 
 export type EventItem = {
   id: string;
-  tanggal: string; // YYYY-MM-DD
+  tanggal: string; // YYYY-MM-DD, atau 'Coming Soon' kalau tanggal belum pasti
   jam: string;
   nama: string;
   lokasi: string;
@@ -6873,12 +6979,13 @@ export type ArchiveItem = {
   tanggal: string; // YYYY-MM-DD
   ringkas: string;
   isi: string[];
+  foto?: string[]; // opsional — path gambar dokumentasi, taruh file-nya di /public
 };
 
 export const EVENTS: EventItem[] = [
   {
     id: 'tenun-2026-07',
-    tanggal: '2026-07-10',
+    tanggal: '2026-07-11',
     jam: '19:00 WITA',
     nama: 'TENUN Bulanan',
     lokasi: 'Kedai Kopi Gatenine, Manado',
@@ -6896,6 +7003,30 @@ export const EVENTS: EventItem[] = [
 
 export const ARCHIVES: ArchiveItem[] = [
   {
+    // Slug ini SENGAJA dibuat sama persis dengan hasil otomatis dari
+    // convertPastEventsToArchives() untuk entri 'TENUN Bulanan' tanggal
+    // 2026-07-11 (polanya: slugify(nama)-tanggal). Kalau nama atau
+    // tanggal event TENUN di EVENTS berubah lagi nanti, slug di sini
+    // HARUS ikut disesuaikan juga, kalau tidak versi kurasi manual ini
+    // tidak akan menggantikan versi generik, dan malah muncul dobel.
+    slug: 'tenun-bulanan-2026-07-11',
+    judul: 'TENUN Juli 2026',
+    tanggal: '2026-07-11',
+    ringkas: 'Dialog lintas iman bertema Muharram — esensi Tahun Baru Islam dan relevansinya bagi semua orang, dihadiri peserta Muslim, Kristen, dan elder Gereja Mormon.',
+    isi: [
+      'Materi utama membahas esensi Tahun Baru Islam (Muharram): mengapa umat Muslim punya penanggalan tahun baru sendiri, sistemnya, dan relevansinya bagi siapa pun lepas dari latar belakang agama.',
+      'Sesi tanya jawab dari peserta Kristen berlangsung dua babak: babak pertama seputar materi, babak kedua pertanyaan bebas.',
+      'Diselingi sesi permainan sebelum dan sesudah diskusi untuk mencairkan suasana antar peserta lintas agama.',
+      'Dihadiri peserta dalam jumlah cukup banyak, dari latar belakang Muslim, Kristen, dan beberapa elder dari Gereja Mormon.',
+      '"Saya sadar bahwa wadah ini sangat diperlukan untuk diskusi iman yang berbeda, karena kalau misalnya dua organisasi Muslim dan Kristen membuat forum begini mungkin akan ada perdebatan karena berasal dari dua wadah berbeda dengan visi misi berbeda. Tapi BMC adalah satu komunitas dengan visi yang sama sehingga mencegah hal itu." — salah satu peserta',
+    ],
+    foto: [
+      '/tenun new.jpeg',
+      '/games tenun.jpeg',
+      '/ten.JPG',
+    ],
+  },
+  {
     slug: 'tenun-juni-2026',
     judul: 'TENUN Juni 2026',
     tanggal: '2026-06-13',
@@ -6904,17 +7035,6 @@ export const ARCHIVES: ArchiveItem[] = [
       'Peserta berbagi pengalaman membangun ruang aman di lingkungan masing-masing.',
       'Diskusi menyorot pentingnya mendengar aktif sebelum merespons.',
       'Tindak lanjut: sesi mentoring kecil untuk anggota baru.',
-    ],
-  },
-  {
-    slug: 'anyaman-juni-2026',
-    judul: 'ANYAMAN Juni 2026',
-    tanggal: '2026-06-27',
-    ringkas: 'Sesi ekspresi kreatif dan refleksi.',
-    isi: [
-      'Anggota menampilkan karya puisi dan musik.',
-      'Refleksi bersama tentang keberanian berekspresi.',
-      'Tindak lanjut: pameran mini karya komunitas bulan depan.',
     ],
   },
 ];
@@ -6928,10 +7048,17 @@ function slugify(input: string) {
     .replace(/\s+/g, '-');
 }
 
+// Cek apakah string berformat tanggal YYYY-MM-DD yang valid.
+// Dipakai supaya nilai placeholder seperti 'Coming Soon' tidak ikut
+// dianggap sebagai tanggal beneran saat dibandingkan.
+function isValidDateString(value: string): boolean {
+  return /^\d{4}-\d{2}-\d{2}$/.test(value);
+}
+
 export function getNearestEvent(now = new Date()): EventItem | null {
   const today = now.toISOString().slice(0, 10);
   const upcoming = EVENTS
-    .filter((e) => e.tanggal >= today)
+    .filter((e) => isValidDateString(e.tanggal) && e.tanggal >= today)
     .sort((a, b) => a.tanggal.localeCompare(b.tanggal));
 
   return upcoming[0] ?? null;
@@ -6940,7 +7067,7 @@ export function getNearestEvent(now = new Date()): EventItem | null {
 export function getPastEvents(now = new Date()): EventItem[] {
   const today = now.toISOString().slice(0, 10);
   return EVENTS
-    .filter((e) => e.tanggal < today)
+    .filter((e) => isValidDateString(e.tanggal) && e.tanggal < today)
     .sort((a, b) => b.tanggal.localeCompare(a.tanggal));
 }
 
@@ -6962,8 +7089,10 @@ export function getCombinedArchives(now = new Date()): ArchiveItem[] {
   const autoArchives = convertPastEventsToArchives(getPastEvents(now));
   const map = new Map<string, ArchiveItem>();
 
+  // ARCHIVES manual ditaruh belakangan supaya menimpa versi otomatis
+  // kalau slug-nya sama (prioritas ke data yang sudah dikurasi manual).
   for (const item of [...autoArchives, ...ARCHIVES]) {
-    if (!map.has(item.slug)) map.set(item.slug, item);
+    map.set(item.slug, item);
   }
 
   return Array.from(map.values()).sort((a, b) => b.tanggal.localeCompare(a.tanggal));
@@ -6972,6 +7101,11 @@ export function getCombinedArchives(now = new Date()): ArchiveItem[] {
 export function getLatestArchive(now = new Date()): ArchiveItem | null {
   const all = getCombinedArchives(now);
   return all.length ? all[0] : null;
+}
+
+// Ambil beberapa arsip terbaru sekaligus — dipakai untuk galeri dokumentasi di homepage.
+export function getRecentArchives(count = 3, now = new Date()): ArchiveItem[] {
+  return getCombinedArchives(now).slice(0, count);
 }
 
 ============================================================

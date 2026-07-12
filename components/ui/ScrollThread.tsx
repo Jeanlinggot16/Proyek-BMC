@@ -30,6 +30,7 @@ export default function ScrollThread() {
   return (
     <div
       aria-hidden="true"
+      className="hidden lg:block" // ⚡ Menyembunyikan benang pada mobile & tablet, hanya tampil di desktop (≥1024px)
       style={{
         position: 'fixed',
         top: '70px',
