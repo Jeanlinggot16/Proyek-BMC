@@ -509,47 +509,6 @@ Berikut saya lampirkan bukti transfernya. Terima kasih!`;
           </div>
         </div>
       </section>
-
-      {/* SECTION 4: SPONSORS & DONORS GRID */}
-      <section className="bg-[#100E0C]/60 border border-white/5 rounded-3xl p-8 max-w-4xl mx-auto text-center">
-        <SectionLabel gold>Apresiasi Kami</SectionLabel>
-        <h2 className="font-serif text-2xl font-bold text-white mb-6">Kolektif & Lembaga Pendukung</h2>
-        
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 items-center justify-items-center opacity-60 hover:opacity-85 transition-opacity duration-300">
-          <div className="flex flex-col items-center">
-            <div className="h-10 flex items-center justify-center text-xs font-extrabold tracking-[0.25em] text-[#F5F5F5] font-serif uppercase">
-              PARAGON<span className="text-[#C0392B]">CO</span>
-            </div>
-            <span className="text-[8px] text-[#8A8A94] uppercase tracking-widest mt-1">Sponsor Budaya</span>
-          </div>
-
-          <div className="flex flex-col items-center">
-            <div className="h-10 flex items-center justify-center text-xs font-bold text-[#F5F5F5] italic tracking-tight">
-              PT MULTI SANDANG
-            </div>
-            <span className="text-[8px] text-[#8A8A94] uppercase tracking-widest mt-1">Sponsor Logistik</span>
-          </div>
-
-          <div className="flex flex-col items-center">
-            <div className="h-10 flex items-center justify-center text-xs font-serif font-black tracking-wider text-[#D4AF37]">
-              KATUP KOLEKTIF
-            </div>
-            <span className="text-[8px] text-[#8A8A94] uppercase tracking-widest mt-1">Mitra Distribusi</span>
-          </div>
-
-          <div className="flex flex-col items-center">
-            <div className="h-10 flex items-center justify-center text-xs font-mono font-bold tracking-widest text-[#F5F5F5]">
-              MANADO_READS
-            </div>
-            <span className="text-[8px] text-[#8A8A94] uppercase tracking-widest mt-1">Jejaring Literasi</span>
-          </div>
-        </div>
-
-        <div className="border-t border-white/5 mt-6 pt-5">
-          <p className="text-[11px] text-[#B8B8C0]">Ingin menawarkan kerja sama kemitraan resmi, donasi buku masif, atau hibah fasilitas? <a href="/kontak" className="text-[#D4AF37] font-bold hover:underline">Hubungi Tim JALIN →</a></p>
-        </div>
-      </section>
-
     </main>
   );
 }
