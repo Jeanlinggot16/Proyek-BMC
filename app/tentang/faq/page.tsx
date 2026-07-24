@@ -10,7 +10,7 @@ export default function TentangFaqPage() {
   return (
     <section className="max-w-4xl mx-auto px-6 py-16">
       <SectionLabel gold>Pertanyaan Umum</SectionLabel>
-      <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-4">FAQ Komunitas</h1>
+      <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-4">FAQ</h1>
       <p className="text-zinc-400 mb-10">
         Pertanyaan yang sering ditanyakan anggota baru.
       </p>

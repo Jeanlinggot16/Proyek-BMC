@@ -1,3 +1,4 @@
+// FILE: app/layout.tsx
 import type { Metadata } from 'next';
 import { Inter, Playfair_Display } from 'next/font/google';
 import './globals.css';
@@ -8,6 +9,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import PageTransition from '@/components/page-transition';
 import ScrollThread from '@/components/ui/ScrollThread';
+import PopupSorotan from '@/components/PopupSorotan';
 
 const sans = Inter({
   subsets: ['latin'],
@@ -76,6 +78,9 @@ export default function RootLayout({
       <body className="relative min-h-screen antialiased">
         {/* Banner pengumuman — paling atas di DOM, geser Navbar lewat CSS variable --bmc-banner-h */}
         <AnnouncementBanner />
+
+        {/* Pop-up Iklan / Sorotan Khusus (Modal Overlay yang muncul otomatis) */}
+        <PopupSorotan />
 
         {/* Latar global — gradient bars + loom grid, harus di paling belakang (z-0) */}
         <GlobalBackground />

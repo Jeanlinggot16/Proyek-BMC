@@ -9,8 +9,8 @@ export interface Slide {
   title: string;
   highlight: string;
   desc: string;
-  ctaPage: PageID;
-  ctaLabel: string;
+  ctaPage?: PageID;
+  ctaLabel?: string;
 }
 
 export interface ProgramItem {
@@ -68,8 +68,6 @@ export const SLIDES: Slide[] = [
     title: 'Ruang Aman untuk',
     highlight: 'Bertemu & Berdialog',
     desc: 'Komunitas lintas iman, budaya, dan kehidupan di Sulawesi Utara yang merajut perjumpaan, penerimaan, dan kebersamaan menjadi satu kesatuan yang utuh.',
-    ctaPage: 'daftar',
-    ctaLabel: 'Gabung Komunitas →',
   },
   {
     eyebrow: 'PROSES KREATIF PEMUDA',

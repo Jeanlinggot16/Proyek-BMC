@@ -87,7 +87,7 @@ body {
   background-repeat: no-repeat;
 }
 
-/* ─── 6. Efek Pendaran & Animasi Kustom ────────────────────────────────────── */
+/* ─── 6. Efek Pendaran (Glow Effects) — Lebih Hangat ─────────────────────── */
 .shadow-glow-red {
   box-shadow: 0 0 30px rgba(192, 57, 43, 0.25);
 }
@@ -109,7 +109,9 @@ body {
     0 0 40px rgba(212, 175, 55, 0.10);
 }
 
-/* 6a. Keyframes */
+/* ─── 7. Animasi Kustom ───────────────────────────────────────────────────── */
+
+/* 7a. Fade In & Slide Up */
 @keyframes fadeInUp {
   from {
     opacity:   0;
@@ -121,49 +123,41 @@ body {
   }
 }
 
+.animate-fadeIn {
+  animation: fadeInUp 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* 7b. Floating / Melayang */
 @keyframes float {
   0%   { transform: translateY(0px)   rotate(0deg); }
   50%  { transform: translateY(-12px) rotate(1deg); }
   100% { transform: translateY(0px)   rotate(0deg); }
 }
 
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+/* 7c. Warm Pulse — seperti detak jantung */
 @keyframes warmPulse {
   0%, 100% { box-shadow: 0 0 20px rgba(192,57,43,0.3); }
   50%      { box-shadow: 0 0 35px rgba(192,57,43,0.5), 0 0 60px rgba(212,175,55,0.2); }
-}
-
-@keyframes logoTraceAnimation {
-  0%   { stroke-dashoffset: 200; }
-  100% { stroke-dashoffset: 0; }
-}
-
-/* 6b. Kelas Animasi */
-.animate-fadeIn {
-  animation: fadeInUp 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-.animate-float {
-  animation: float 6s ease-in-out infinite;
 }
 
 .animate-warm-pulse {
   animation: warmPulse 3s ease-in-out infinite;
 }
 
+/* 7d. Transisi Premium */
 .transition-premium {
   transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.bmc-logo-trace {
-  animation: logoTraceAnimation 4.5s linear infinite;
-}
-
-/* 6c. Efek Kilau Sapuan (Shine Sweep) */
+/* 7e. Kilau benang menyapu (shine sweep) saat hover */
 .bmc-shine {
   position: relative;
   overflow: hidden;
 }
-
 .bmc-shine::after {
   content: '';
   position: absolute;
@@ -181,12 +175,51 @@ body {
   transition: left 0.6s cubic-bezier(0.16, 1, 0.3, 1);
   pointer-events: none;
 }
-
 .bmc-shine:hover::after {
   left: 130%;
 }
 
-/* ─── 7. Sistem Design Token (Shadcn / Tailwind v4) ─────────────────────── */
+/* 7f. Animasi global */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.4; }
+}
+
+@keyframes logoTraceAnimation {
+  0%   { stroke-dashoffset: 200; }
+  100% { stroke-dashoffset: 0; }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes overlayFade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes panelDropIn {
+  from { opacity: 0; transform: translateY(-12px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes panelItemIn {
+  from { opacity: 0; transform: translateX(-8px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.bmc-logo-trace {
+  animation: logoTraceAnimation 4.5s linear infinite;
+}
+
+/* ─── 8. Sistem Design Token (Shadcn / Tailwind) ─────────────────────────── */
 @theme inline {
   /* Tipografi */
   --font-heading: var(--font-sans);
@@ -239,7 +272,7 @@ body {
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-/* ─── 8. Variabel CSS — Mode Terang (Light Mode) ────────────────────────── */
+/* ─── 9. Variabel CSS — Mode Terang (Light Mode) ────────────────────────── */
 :root {
   --radius: 0.625rem;
 
@@ -271,7 +304,7 @@ body {
   --ring:              oklch(0.708 0 0);
 }
 
-/* ─── 9. Variabel CSS — Mode Gelap (Dark Mode) ──────────────────────────── */
+/* ─── 10. Variabel CSS — Mode Gelap (Dark Mode) ──────────────────────────── */
 .dark {
   --background:        oklch(0.145 0 0);
   --foreground:        oklch(0.985 0 0);
@@ -301,7 +334,7 @@ body {
   --ring:              oklch(0.556 0 0);
 }
 
-/* ─── 10. Layer Basis (Base Layer) ───────────────────────────────────────── */
+/* ─── 11. Layer Basis (Base Layer) ───────────────────────────────────────── */
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -316,9 +349,7 @@ body {
   }
 }
 
-/* ─── 11. Direktif Utilitas Tailwind v4 Custom (@utility) ────────────────── */
-
-/* 11a. Utilitas Bawaan BMC */
+/* ─── 12. Utility Placeholder ────────────────────────────────────────────── */
 @utility placeholder-bmc {
   &::placeholder {
     color: var(--color-bmc-text-placeholder);
@@ -326,6 +357,7 @@ body {
   }
 }
 
+/* ─── 13. Focus Ring Custom BMC ───────────────────────────────────────────── */
 @utility focus-ring-bmc {
   &:focus-visible {
     outline: none;
@@ -334,10 +366,12 @@ body {
   }
 }
 
+/* ─── 14. Animasi Fade In Up ──────────────────────────────────────────────── */
 @utility animate-fadeInUp {
   animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+/* ─── 15. Shadow BMC ──────────────────────────────────────────────────────── */
 @utility shadow-bmc-card {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
 }
@@ -350,36 +384,33 @@ body {
   box-shadow: 0 0 32px rgba(192, 57, 43, 0.45);
 }
 
-/* 11b. Pola Latar Bertekstur (Integrasi Claude & Peningkatan Standar v4) */
-@utility bg-pattern-thread {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='72' height='72' viewBox='0 0 24 24' fill='none' stroke='%23D4AF37' stroke-width='0.7' stroke-opacity='0.05'%3E%3Ccircle cx='12' cy='12' r='6.5'/%3E%3Cpath d='M6 12c1.8-2.6 3.6-2.6 5.5 0s3.7 2.6 5.5 0'/%3E%3C/svg%3E");
+/* ─── 16. Pola Latar Bertekstur — variasi per-section (REVISI) ───────────────
+   Revisi dari versi awal. Sebelumnya tiap section cuma pakai 1 bentuk ikon
+   yang diulang rapi, hasilnya kelihatan seperti pola wallpaper, bukan
+   variatif. Sekarang tiap section berisi KOMBINASI 2 bentuk ikon berbeda
+   yang diposisikan berselang-seling dalam satu ubin (tile), supaya lebih
+   mendekati kesan "organik" seperti referensi Indorelawan — beberapa jenis
+   ikon berbeda tersebar bersama, bukan satu bentuk yang itu-itu saja.
+   Opacity tetap dijaga sangat rendah, ini tekstur latar, bukan dekorasi
+   yang menonjol. */
+
+.bg-pattern-thread {
+  /* Kombinasi: kumparan benang + simpul silang, warna emas */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140' viewBox='0 0 140 140' fill='none'%3E%3Cg stroke='%23D4AF37' stroke-width='0.8' stroke-opacity='0.055'%3E%3Ccircle cx='28' cy='28' r='9'/%3E%3Cpath d='M20 28c2.6-3.6 5-3.6 7.6 0s5 3.6 7.6 0'/%3E%3C/g%3E%3Cg stroke='%23D4AF37' stroke-width='0.8' stroke-opacity='0.04' transform='translate(98,92) rotate(18)'%3E%3Cpath d='M-7 -7l14 14M7 -7l-14 14'/%3E%3Ccircle r='9'/%3E%3C/g%3E%3C/svg%3E");
   background-repeat: repeat;
-  background-size: 72px 72px;
+  background-size: 140px 140px;
 }
 
-@utility bg-pattern-dialog {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 24 24' fill='none' stroke='%23FFFFFF' stroke-width='0.7' stroke-opacity='0.04'%3E%3Cpath d='M4 5.5h9v6H8l-2.5 2.5v-2.5H4z'/%3E%3Cpath d='M12 9.5h8v5.5h-1.8v2.5l-2.5-2.5H12z'/%3E%3C/svg%3E");
+.bg-pattern-dialog {
+  /* Kombinasi: dua balon percakapan + tanda tanya dalam lingkaran, warna putih */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150' viewBox='0 0 150 150' fill='none'%3E%3Cg stroke='%23FFFFFF' stroke-width='0.8' stroke-opacity='0.045'%3E%3Cpath d='M18 24h20v12H31l-5 5v-5H18z'/%3E%3Cpath d='M38 32h18v11h-4v5l-5-5H38z'/%3E%3C/g%3E%3Cg stroke='%23FFFFFF' stroke-width='0.8' stroke-opacity='0.035' transform='translate(108,96)'%3E%3Ccircle r='8'/%3E%3Cpath d='M-3 -2a3 3 0 116 0c0 2-3 2-3 4' stroke-linecap='round'/%3E%3Ccircle cx='0' cy='5' r='0.7' fill='%23FFFFFF' stroke='none'/%3E%3C/g%3E%3C/svg%3E");
   background-repeat: repeat;
-  background-size: 80px 80px;
+  background-size: 150px 150px;
 }
 
-@utility bg-pattern-weave {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 24 24' fill='none' stroke='%23C0392B' stroke-width='0.7' stroke-opacity='0.05'%3E%3Cpath d='M4 8c4 0 4 8 8 8s4-8 8-8'/%3E%3Cpath d='M4 16c4 0 4-8 8-8s4 8 8 8'/%3E%3C/svg%3E");
+.bg-pattern-weave {
+  /* Kombinasi: garis rajutan silang + hati garis luar, warna merah bata */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='130' height='130' viewBox='0 0 130 130' fill='none'%3E%3Cg stroke='%23C0392B' stroke-width='0.8' stroke-opacity='0.05'%3E%3Cpath d='M14 34c4 0 4 8 8 8s4-8 8-8'/%3E%3Cpath d='M14 42c4 0 4-8 8-8s4 8 8 8'/%3E%3C/g%3E%3Cg stroke='%23C0392B' stroke-width='0.8' stroke-opacity='0.045' transform='translate(94,88) rotate(-10)'%3E%3Cpath d='M0 6c0-4 3-6 6-6s6 2 6 6c0 5-6 9-6 9s-6-4-6-9z'/%3E%3C/g%3E%3C/svg%3E");
   background-repeat: repeat;
-  background-size: 64px 64px;
-}
-
-/* 11c. Efek Transisi Latar & Interaktif Lanjutan */
-@utility mask-gradient-b {
-  mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 85%, rgba(0,0,0,0) 100%);
-  -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 85%, rgba(0,0,0,0) 100%);
-}
-
-@utility bmc-card-interactive {
-  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-  &:hover {
-    transform: translateY(-4px);
-    border-color: var(--color-bmc-border-hover);
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5), 0 0 25px rgba(212, 175, 55, 0.05);
-  }
+  background-size: 130px 130px;
 }

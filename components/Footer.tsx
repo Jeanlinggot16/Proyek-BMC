@@ -43,6 +43,8 @@ export default function Footer() {
             <Link href="/saran" style={linkStyle}>Saran &amp; Kritik</Link>
             <span style={{ color: 'rgba(255,255,255,0.05)' }}>|</span>
             <Link href="/daftar" style={linkStyle}>Bergabung</Link>
+            <span style={{ color: 'rgba(255,255,255,0.05)' }}>|</span>
+            <Link href="/donasi" style={linkStyle}>Donasi</Link>
           </div>
           <p style={{ fontSize: '11px', color: '#3F3F46' }}>
             &copy; {new Date().getFullYear()} Benang Merah Community Manado. Hak Cipta Dilindungi Undang-Undang.

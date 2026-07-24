@@ -1,3 +1,4 @@
+// FILE: components/Navbar.tsx
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
@@ -5,6 +6,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import OfficialBMCLogo from '@/components/ui/OfficialBMCLogo';
 import { cn } from '@/lib/utils';
+import { getNearestEvent } from '@/constants/communityData';
 
 type SubItem = { href: string; label: string };
 type NavItem = {
@@ -14,6 +16,7 @@ type NavItem = {
   cta?: boolean;
 };
 
+// Menata ulang menu navigasi: "Donasi" menjadi menu biasa, "Gabung" menjadi tombol CTA paling kanan
 const NAV_ITEMS: NavItem[] = [
   { label: 'Beranda', href: '/' },
   {
@@ -31,12 +34,14 @@ const NAV_ITEMS: NavItem[] = [
       { href: '/tentang/nilai', label: 'Nilai Inti' },
       { href: '/tentang/tim', label: 'Struktur Tim' },
       { href: '/tentang/faq', label: 'FAQ' },
+      { href: '/kontak', label: 'Hubungi Kami' },
     ],
   },
   {
     label: 'Arsip',
     children: [{ href: '/arsip', label: 'Dokumentasi Kegiatan' }],
   },
+  { label: 'Donasi', href: '/donasi' },
   { label: 'Gabung', href: '/daftar', cta: true },
 ];
 
@@ -49,9 +54,12 @@ export default function Navbar() {
 
   const [hidden, setHidden] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const lastScrollY = useRef(0);
+  const [showBanner, setShowBanner] = useState(true);
 
+  const lastScrollY = useRef(0);
   const desktopNavRef = useRef<HTMLDivElement>(null);
+
+  const nearestEvent = getNearestEvent();
 
   const isActivePath = (href: string) => (href === '/' ? pathname === '/' : pathname.startsWith(href));
 
@@ -106,227 +114,117 @@ export default function Navbar() {
     return () => document.removeEventListener('mousedown', onDocClick);
   }, []);
 
-  const pillClass = cn(
-    'pointer-events-auto backdrop-blur-xl border border-white/8 transition-[background,box-shadow] duration-300',
-    scrolled ? 'bg-[#0A0A0A]/78 shadow-[0_10px_36px_rgba(0,0,0,0.55)]' : 'bg-[#0D0D0D]/60 shadow-[0_8px_32px_rgba(0,0,0,0.4)]'
-  );
+  const hasActiveBanner = nearestEvent && showBanner;
 
   return (
-    <header
-      className={cn(
-        'fixed left-0 right-0 z-[9999] flex items-center justify-between',
-        'top-[var(--bmc-banner-h,0px)]',
-        'px-4 py-3 sm:px-6 sm:py-4',
-        'pointer-events-none transition-[top,transform,opacity] duration-[450ms] ease-[cubic-bezier(0.16,1,0.3,1)]',
-        hidden ? '-translate-y-[120%] opacity-0' : 'translate-y-0 opacity-100'
-      )}
-    >
-      {/* Logo */}
-      <Link
-        href="/"
-        onClick={() => {
-          setMobileMenuOpen(false);
-          setOpenDesktopDropdown(null);
-        }}
-        className={cn(
-          pillClass,
-          'flex items-center px-3 py-2 rounded-full z-[10002] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37] focus-visible:ring-offset-2 focus-visible:ring-offset-[#060606]'
-        )}
-      >
-        <OfficialBMCLogo height={32} animated={true} />
-      </Link>
+    <>
+      {/* 1. BANNER ANNOUNCEMENT SOROTAN (Fixed di Paling Atas) */}
+      {hasActiveBanner && (
+        <div className="fixed top-0 left-0 right-0 z-[10000] h-[40px] bg-[#111111] border-b border-white/10 text-white text-[11px] sm:text-xs px-4 flex items-center justify-between">
+          <div className="max-w-6xl mx-auto w-full flex items-center justify-between">
+            <div className="flex items-center gap-2 overflow-hidden">
+              <span className="text-base" role="img" aria-label="calendar">🗓️</span>
+              <p className="truncate font-medium text-white/90">
+                <span className="font-bold text-white">{nearestEvent.nama}</span> — {nearestEvent.tanggal}
+              </p>
+            </div>
 
-      {/* Desktop */}
-      <nav
-        ref={desktopNavRef}
-        className={cn(pillClass, 'hidden md:flex relative items-center gap-1 p-1.5 rounded-full')}
-      >
-        {NAV_ITEMS.map((item) => {
-          const isActive = isItemActive(item);
-          const hasChildren = !!item.children?.length;
-          const isOpen = openDesktopDropdown === item.label;
-
-          if (item.cta && item.href) {
-            return (
+            <div className="flex items-center gap-3 shrink-0">
               <Link
-                key={item.label}
-                href={item.href}
-                className="relative z-[1] ml-1 bg-[#CC1111] text-[10px] lg:text-[11px] font-bold tracking-[0.08em] lg:tracking-[0.12em] uppercase px-3.5 py-2 lg:px-5 lg:py-2.5 rounded-full text-white no-underline whitespace-nowrap shadow-[0_0_16px_rgba(204,17,17,0.35)] transition-all duration-300 hover:bg-[#AA0A0A] hover:shadow-[0_0_22px_rgba(204,17,17,0.55)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37] focus-visible:ring-offset-1 focus-visible:ring-offset-[#0D0D0D]"
+                href="/kegiatan/jadwal"
+                className="bg-[#C0392B] hover:bg-[#A93226] text-white text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full transition-all"
               >
-                {item.label} →
+                LIHAT DETAIL
               </Link>
-            );
-          }
-
-          if (hasChildren) {
-            return (
-              <div key={item.label} className="relative">
-                <button
-                  type="button"
-                  onClick={() => setOpenDesktopDropdown((prev) => (prev === item.label ? null : item.label))}
-                  className={cn(
-                    'relative z-[1] flex items-center gap-1 text-[10px] lg:text-[11px] font-bold tracking-[0.08em] lg:tracking-[0.12em] uppercase',
-                    'px-2.5 py-2 lg:px-4 lg:py-2.5 rounded-full whitespace-nowrap transition-colors duration-300',
-                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37] focus-visible:ring-offset-1 focus-visible:ring-offset-[#0D0D0D]',
-                    isActive ? 'text-[#F5F5F5]' : 'text-[#A1A1AA]'
-                  )}
-                >
-                  {item.label}
-                  <span className={cn('text-[10px] transition-transform duration-300', isOpen ? 'rotate-180' : 'rotate-0')}>▾</span>
-                </button>
-
-                {isOpen && (
-                  <div
-                    className="absolute top-[110%] left-0 min-w-[240px] rounded-2xl p-2 z-[10010]"
-                    style={{
-                      background: 'rgba(10,10,10,0.98)',
-                      backdropFilter: 'blur(20px)',
-                      border: '1px solid rgba(255,255,255,0.08)',
-                      boxShadow: '0 20px 50px rgba(0,0,0,0.6)',
-                      animation: 'panelDropIn 0.25s cubic-bezier(0.16,1,0.3,1)',
-                    }}
-                  >
-                    {item.children!.map((sub) => {
-                      const subActive = isActivePath(sub.href);
-                      return (
-                        <Link
-                          key={sub.href}
-                          href={sub.href}
-                          onClick={() => setOpenDesktopDropdown(null)}
-                          className={cn(
-                            'block rounded-xl px-3 py-2.5 text-[11px] font-semibold tracking-[0.04em] no-underline transition-colors',
-                            subActive ? 'text-[#D4AF37] bg-white/5' : 'text-[#E8E6E0] hover:bg-white/5'
-                          )}
-                        >
-                          {sub.label}
-                        </Link>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            );
-          }
-
-          return (
-            <Link
-              key={item.label}
-              href={item.href!}
-              className={cn(
-                'relative z-[1] text-[10px] lg:text-[11px] font-bold tracking-[0.08em] lg:tracking-[0.12em] uppercase',
-                'px-2.5 py-2 lg:px-4 lg:py-2.5 rounded-full whitespace-nowrap no-underline transition-colors duration-300',
-                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37] focus-visible:ring-offset-1 focus-visible:ring-offset-[#0D0D0D]',
-                isActive ? 'text-[#F5F5F5]' : 'text-[#A1A1AA]'
-              )}
-            >
-              {item.label}
-            </Link>
-          );
-        })}
-      </nav>
-
-      {/* Mobile Hamburger */}
-      <button
-        onClick={() => setMobileMenuOpen((v) => !v)}
-        aria-label={mobileMenuOpen ? 'Tutup Menu' : 'Buka Menu'}
-        aria-expanded={mobileMenuOpen}
-        aria-controls="bmc-mobile-panel"
-        className={cn(
-          pillClass,
-          'flex md:hidden items-center justify-center text-[#E8E6E0] text-xl cursor-pointer rounded-full z-[10002]',
-          'w-11 h-11 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37] focus-visible:ring-offset-2 focus-visible:ring-offset-[#060606]'
-        )}
-      >
-        {mobileMenuOpen ? '✕' : '☰'}
-      </button>
-
-      {/* Backdrop */}
-      {mobileMenuOpen && (
-        <div
-          className="pointer-events-auto fixed inset-0 z-[10000]"
-          onClick={() => setMobileMenuOpen(false)}
-          style={{ background: 'rgba(0,0,0,0.4)', animation: 'overlayFade 0.3s ease' }}
-        />
+              <button
+                onClick={() => setShowBanner(false)}
+                className="text-white/60 hover:text-white text-sm p-1 transition-colors"
+                aria-label="Tutup Banner"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
-      {/* Mobile Panel */}
-      {mobileMenuOpen && (
+      {/* 2. HEADER FLOATING NAVBAR (Posisi top menyesuaikan apakah banner aktif atau tidak) */}
+      <header
+        className={cn(
+          'fixed left-0 right-0 z-[9999] px-4 py-3 sm:px-6 sm:py-4',
+          'transition-all duration-[450ms] ease-[cubic-bezier(0.16,1,0.3,1)]',
+          hasActiveBanner ? 'top-[40px]' : 'top-0',
+          hidden ? '-translate-y-[150%] opacity-0' : 'translate-y-0 opacity-100'
+        )}
+      >
+        {/* Container Utama: Menyatukan semua bagian ke dalam satu baris horizontal terpusat */}
         <div
-          id="bmc-mobile-panel"
-          role="dialog"
-          aria-label="Menu navigasi"
-          className="pointer-events-auto fixed top-[68px] left-4 right-4 sm:left-6 sm:right-6 z-[10001] rounded-2xl overflow-hidden md:hidden"
-          style={{
-            background: 'rgba(10,10,10,0.97)',
-            backdropFilter: 'blur(24px)',
-            border: '1px solid rgba(255,255,255,0.08)',
-            boxShadow: '0 20px 50px rgba(0,0,0,0.6)',
-            animation: 'panelDropIn 0.35s cubic-bezier(0.16,1,0.3,1)',
-            maxHeight: 'calc(100vh - 90px)',
-            overflowY: 'auto',
-          }}
-          onClick={(e) => e.stopPropagation()}
+          className={cn(
+            'max-w-6xl mx-auto w-full flex items-center justify-between px-4 py-2.5 sm:px-6 sm:py-3 rounded-full',
+            'backdrop-blur-xl border border-white/8 transition-[background,box-shadow] duration-300',
+            scrolled ? 'bg-[#0A0A0A]/85 shadow-[0_10px_36px_rgba(0,0,0,0.55)]' : 'bg-[#0D0D0D]/70 shadow-[0_8px_32px_rgba(0,0,0,0.4)]'
+          )}
         >
-          <nav className="relative z-[1] flex flex-col py-2">
-            {NAV_ITEMS.map((item, idx) => {
+          {/* SISI KIRI: Logo Terintegrasi */}
+          <Link
+            href="/"
+            onClick={() => {
+              setMobileMenuOpen(false);
+              setOpenDesktopDropdown(null);
+            }}
+            className="flex items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37] focus-visible:ring-offset-2 focus-visible:ring-offset-[#060606] rounded-full p-1"
+          >
+            <OfficialBMCLogo height={30} animated={true} />
+          </Link>
+
+          {/* SISI TENGAH: Menu Navigasi Berbaris Rapi (Hanya Tampil di Desktop) */}
+          <nav
+            ref={desktopNavRef}
+            className="hidden md:flex items-center justify-center gap-1.5 flex-1 mx-4"
+          >
+            {NAV_ITEMS.filter(item => !item.cta).map((item) => {
               const isActive = isItemActive(item);
               const hasChildren = !!item.children?.length;
-
-              if (item.cta && item.href) {
-                return (
-                  <Link
-                    key={item.label}
-                    href={item.href}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="mx-3 my-2 rounded-full bg-[#CC1111] px-4 py-3 text-center text-[11px] font-bold uppercase tracking-[0.12em] text-white no-underline"
-                    style={{
-                      animation: 'panelItemIn 0.4s cubic-bezier(0.16,1,0.3,1) forwards',
-                      animationDelay: `${0.04 * idx + 0.05}s`,
-                    }}
-                  >
-                    {item.label} →
-                  </Link>
-                );
-              }
+              const isOpen = openDesktopDropdown === item.label;
 
               if (hasChildren) {
-                const isOpen = openMobileAccordion === item.label;
                 return (
-                  <div
-                    key={item.label}
-                    className="border-b border-white/5"
-                    style={{
-                      animation: 'panelItemIn 0.4s cubic-bezier(0.16,1,0.3,1) forwards',
-                      animationDelay: `${0.04 * idx + 0.05}s`,
-                    }}
-                  >
+                  <div key={item.label} className="relative">
                     <button
                       type="button"
-                      onClick={() => setOpenMobileAccordion((prev) => (prev === item.label ? null : item.label))}
+                      onClick={() => setOpenDesktopDropdown((prev) => (prev === item.label ? null : item.label))}
                       className={cn(
-                        'w-full flex items-center justify-between px-5 py-3.5 text-left font-serif text-base',
-                        isActive ? 'text-[#D4AF37]' : 'text-[#E8E6E0]'
+                        'flex items-center gap-1 text-[10px] lg:text-[11px] font-bold tracking-[0.08em] lg:tracking-[0.12em] uppercase',
+                        'px-2.5 py-2 lg:px-4 lg:py-2 rounded-full whitespace-nowrap transition-colors duration-300',
+                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37] focus-visible:ring-offset-1 focus-visible:ring-offset-[#0D0D0D]',
+                        isActive ? 'text-[#F5F5F5]' : 'text-[#A1A1AA] hover:text-white'
                       )}
                     >
-                      <span>{item.label}</span>
-                      <span className={cn('text-sm transition-transform duration-300', isOpen ? 'rotate-180' : 'rotate-0')}>▾</span>
+                      {item.label}
+                      <span className={cn('text-[9px] transition-transform duration-300', isOpen ? 'rotate-180' : 'rotate-0')}>▾</span>
                     </button>
 
-                    <div
-                      className="overflow-hidden transition-all duration-300"
-                      style={{ maxHeight: isOpen ? 260 : 0, opacity: isOpen ? 1 : 0 }}
-                    >
-                      <div className="pb-2">
+                    {isOpen && (
+                      <div
+                        className="absolute top-[120%] left-1/2 -translate-x-1/2 min-w-[240px] rounded-2xl p-2 z-[10010]"
+                        style={{
+                          background: 'rgba(10,10,10,0.98)',
+                          backdropFilter: 'blur(20px)',
+                          border: '1px solid rgba(255,255,255,0.08)',
+                          boxShadow: '0 20px 50px rgba(0,0,0,0.6)',
+                          animation: 'panelDropIn 0.25s cubic-bezier(0.16,1,0.3,1)',
+                        }}
+                      >
                         {item.children!.map((sub) => {
                           const subActive = isActivePath(sub.href);
                           return (
                             <Link
                               key={sub.href}
                               href={sub.href}
-                              onClick={() => setMobileMenuOpen(false)}
+                              onClick={() => setOpenDesktopDropdown(null)}
                               className={cn(
-                                'block px-8 py-2.5 text-[13px] no-underline',
-                                subActive ? 'text-[#D4AF37]' : 'text-[#B4B4BD]'
+                                'block rounded-xl px-3 py-2.5 text-[11px] font-semibold tracking-[0.04em] no-underline transition-colors',
+                                subActive ? 'text-[#D4AF37] bg-white/5' : 'text-[#E8E6E0] hover:bg-white/5'
                               )}
                             >
                               {sub.label}
@@ -334,7 +232,7 @@ export default function Navbar() {
                           );
                         })}
                       </div>
-                    </div>
+                    )}
                   </div>
                 );
               }
@@ -343,15 +241,12 @@ export default function Navbar() {
                 <Link
                   key={item.label}
                   href={item.href!}
-                  onClick={() => setMobileMenuOpen(false)}
                   className={cn(
-                    'border-b border-white/5 px-5 py-3.5 font-serif text-base no-underline',
-                    isActive ? 'text-[#D4AF37]' : 'text-[#E8E6E0]'
+                    'text-[10px] lg:text-[11px] font-bold tracking-[0.08em] lg:tracking-[0.12em] uppercase',
+                    'px-2.5 py-2 lg:px-4 lg:py-2 rounded-full whitespace-nowrap no-underline transition-colors duration-300',
+                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37] focus-visible:ring-offset-1 focus-visible:ring-offset-[#0D0D0D]',
+                    isActive ? 'text-[#F5F5F5]' : 'text-[#A1A1AA] hover:text-white'
                   )}
-                  style={{
-                    animation: 'panelItemIn 0.4s cubic-bezier(0.16,1,0.3,1) forwards',
-                    animationDelay: `${0.04 * idx + 0.05}s`,
-                  }}
                 >
                   {item.label}
                 </Link>
@@ -359,14 +254,159 @@ export default function Navbar() {
             })}
           </nav>
 
-          <div
-            className="relative z-[1] text-center py-3 text-[9px] font-bold tracking-[0.3em] uppercase text-[#D4AF37]"
-            style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}
-          >
-            Berdamai • Bertumbuh • Berkarya
+          {/* SISI KANAN: Tombol Gabung (CTA) Paling Kanan */}
+          <div className="flex items-center gap-2">
+            {NAV_ITEMS.filter(item => item.cta).map((item) => (
+              <Link
+                key={item.label}
+                href={item.href!}
+                className="hidden md:inline-flex bg-[#C0392B] text-[10px] lg:text-[11px] font-bold tracking-[0.08em] lg:tracking-[0.12em] uppercase px-5 py-2.5 rounded-full text-white no-underline whitespace-nowrap shadow-[0_0_16px_rgba(192,57,43,0.35)] transition-all duration-300 hover:bg-[#A93226] hover:shadow-[0_0_22px_rgba(192,57,43,0.55)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37] focus-visible:ring-offset-1 focus-visible:ring-offset-[#0D0D0D]"
+              >
+                {item.label} 👋
+              </Link>
+            ))}
+
+            {/* Hamburger Mobile Menu */}
+            <button
+              onClick={() => setMobileMenuOpen((v) => !v)}
+              aria-label={mobileMenuOpen ? 'Tutup Menu' : 'Buka Menu'}
+              aria-expanded={mobileMenuOpen}
+              aria-controls="bmc-mobile-panel"
+              className="flex md:hidden items-center justify-center text-[#E8E6E0] text-lg cursor-pointer rounded-full w-9 h-9 hover:bg-white/5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37]"
+            >
+              {mobileMenuOpen ? '✕' : '☰'}
+            </button>
           </div>
         </div>
-      )}
-    </header>
+
+        {/* Backdrop Mobile Panel */}
+        {mobileMenuOpen && (
+          <div
+            className="fixed inset-0 z-[10000]"
+            onClick={() => setMobileMenuOpen(false)}
+            style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', animation: 'overlayFade 0.3s ease' }}
+          />
+        )}
+
+        {/* Mobile Drawer Panel */}
+        {mobileMenuOpen && (
+          <div
+            id="bmc-mobile-panel"
+            role="dialog"
+            aria-label="Menu navigasi"
+            className="fixed top-[74px] left-4 right-4 sm:left-6 sm:right-6 z-[10001] rounded-2xl overflow-hidden md:hidden"
+            style={{
+              background: 'rgba(10,10,10,0.97)',
+              backdropFilter: 'blur(24px)',
+              border: '1px solid rgba(255,255,255,0.08)',
+              boxShadow: '0 20px 50px rgba(0,0,0,0.6)',
+              animation: 'panelDropIn 0.35s cubic-bezier(0.16,1,0.3,1)',
+              maxHeight: 'calc(100vh - 100px)',
+              overflowY: 'auto',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <nav className="relative z-[1] flex flex-col py-2">
+              {NAV_ITEMS.map((item, idx) => {
+                const isActive = isItemActive(item);
+                const hasChildren = !!item.children?.length;
+
+                if (item.cta && item.href) {
+                  return (
+                    <Link
+                      key={item.label}
+                      href={item.href}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="mx-3 my-2 rounded-full bg-[#C0392B] px-4 py-3 text-center text-[11px] font-bold uppercase tracking-[0.12em] text-white no-underline"
+                      style={{
+                        animation: 'panelItemIn 0.4s cubic-bezier(0.16,1,0.3,1) forwards',
+                        animationDelay: `${0.04 * idx + 0.05}s`,
+                      }}
+                    >
+                      {item.label} 👋
+                    </Link>
+                  );
+                }
+
+                if (hasChildren) {
+                  const isOpen = openMobileAccordion === item.label;
+                  return (
+                    <div
+                      key={item.label}
+                      className="border-b border-white/5"
+                      style={{
+                        animation: 'panelItemIn 0.4s cubic-bezier(0.16,1,0.3,1) forwards',
+                        animationDelay: `${0.04 * idx + 0.05}s`,
+                      }}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => setOpenMobileAccordion((prev) => (prev === item.label ? null : item.label))}
+                        className={cn(
+                          'w-full flex items-center justify-between px-5 py-3.5 text-left font-serif text-sm',
+                          isActive ? 'text-[#D4AF37]' : 'text-[#E8E6E0]'
+                        )}
+                      >
+                        <span>{item.label}</span>
+                        <span className={cn('text-xs transition-transform duration-300', isOpen ? 'rotate-180' : 'rotate-0')}>▾</span>
+                      </button>
+
+                      <div
+                        className="overflow-hidden transition-all duration-300"
+                        style={{ maxHeight: isOpen ? 320 : 0, opacity: isOpen ? 1 : 0 }}
+                      >
+                        <div className="pb-2">
+                          {item.children!.map((sub) => {
+                            const subActive = isActivePath(sub.href);
+                            return (
+                              <Link
+                                key={sub.href}
+                                href={sub.href}
+                                onClick={() => setMobileMenuOpen(false)}
+                                className={cn(
+                                  'block px-8 py-2.5 text-[12px] no-underline',
+                                  subActive ? 'text-[#D4AF37]' : 'text-[#B4B4BD]'
+                                )}
+                              >
+                                {sub.label}
+                              </Link>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
+
+                return (
+                  <Link
+                    key={item.label}
+                    href={item.href!}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={cn(
+                      'border-b border-white/5 px-5 py-3.5 font-serif text-sm no-underline',
+                      isActive ? 'text-[#D4AF37]' : 'text-[#E8E6E0]'
+                    )}
+                    style={{
+                      animation: 'panelItemIn 0.4s cubic-bezier(0.16,1,0.3,1) forwards',
+                      animationDelay: `${0.04 * idx + 0.05}s`,
+                    }}
+                  >
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </nav>
+
+            <div
+              className="relative z-[1] text-center py-3 text-[9px] font-bold tracking-[0.3em] uppercase text-[#D4AF37]"
+              style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}
+            >
+              Berdamai • Bertumbuh • Berkarya
+            </div>
+          </div>
+        )}
+      </header>
+    </>
   );
 }

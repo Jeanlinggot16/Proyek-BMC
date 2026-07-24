@@ -1,4 +1,4 @@
-// constants/communityData.ts
+// FILE: constants/communityData.ts
 
 export type EventItem = {
   id: string;
@@ -19,6 +19,14 @@ export type ArchiveItem = {
 };
 
 export const EVENTS: EventItem[] = [
+  {
+    id: 'tenun-2026-08',
+    tanggal: '2026-08-15',
+    jam: '19:00 - 23:00 WITA',
+    nama: 'TENUN Agustus: Stop Bullying',
+    lokasi: 'Kedai Kopi Gatenine, Manado',
+    deskripsi: 'Diskusi interaktif dan ruang dialog bersama mengenai isu perundungan (bullying), dampaknya bagi generasi muda, serta upaya membangun lingkungan yang aman dan bersahabat.',
+  },
   {
     id: 'tenun-2026-07',
     tanggal: '2026-07-11',
@@ -60,6 +68,10 @@ export const ARCHIVES: ArchiveItem[] = [
       '/tenun new.jpeg',
       '/games tenun.jpeg',
       '/ten.JPG',
+      '/pemateri.JPEG',
+      '/penanya.JPEG',
+      '/diskusi kelompok.JPEG',
+      '/misel.JPEG',
     ],
   },
   {

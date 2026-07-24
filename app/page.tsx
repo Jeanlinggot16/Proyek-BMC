@@ -10,7 +10,6 @@ import InteractiveWeaveCanvas from '@/components/ui/InteractiveWeaveCanvas';
 import { Divider, SectionLabel, ProgramCardImage } from '@/components/ui/SharedComponents';
 import { cn } from '@/lib/utils';
 
-/* ─── Sub-komponen StatItem ─────────────────────────────────────────────── */
 function StatItem({ value, label, delay, start }: { value: string; label: string; delay: number; start: boolean }) {
   const isInfinity = value.includes('∞');
   const numericPart = parseInt(value.replace(/[^0-9]/g, ''), 10);
@@ -20,7 +19,7 @@ function StatItem({ value, label, delay, start }: { value: string; label: string
   return (
     <div
       className={cn(
-        'flex flex-col items-center justify-center px-4 py-7 sm:px-6 sm:py-10 bg-[#0A0806] transition-all duration-800 ease-out-expo',
+        'flex flex-col items-center justify-center px-4 py-7 sm:px-6 sm:py-10 bg-[#0A0806] transition-all duration-800 ease-out-expo will-change-transform',
         start ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
       )}
       style={{ transitionDelay: `${delay}ms` }}
@@ -42,15 +41,36 @@ function StatItem({ value, label, delay, start }: { value: string; label: string
   );
 }
 
-/* ─── Sub-komponen Kartu Dokumentasi (homepage) ─────────────────────────── */
-function DocCard({ item, delay, visible }: { item: ReturnType<typeof getRecentArchives>[number]; delay: number; visible: boolean }) {
+function DocCard({ item, delay, visible, index }: { item: ReturnType<typeof getRecentArchives>[number]; delay: number; visible: boolean; index: number }) {
   const hasFoto = item.foto && item.foto.length > 0;
+
+  const icons = [
+    <svg key="dialog" className="w-32 h-32 text-[#C0392B]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="0.8" aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 8.511c.884.284 1.5 1.128 1.5 2.097v4.286c0 1.136-.847 2.1-1.98 2.193-.44.032-.88.059-1.32.08m-4.082 4.148l-3.535-3.535a2.25 2.25 0 01-.66-1.591v-.45m-4.5 0a2.25 2.25 0 01-.66 1.591L3 19.5v-3.834c0-1.136.847-2.1 1.98-2.193.44-.032.88-.059 1.32-.08m9.227-9.227C15.105 4.316 13.6 4 12 4s-3.105.316-4.227.915m9.227 9.227c1.121-.599 2.626-.915 4.227-.915s3.105.316 4.227.915m-9.227-9.227A11.97 11.97 0 0112 3c1.6 0 3.105.316 4.227.915" />
+    </svg>,
+    <svg key="book" className="w-32 h-32 text-[#D4AF37]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="0.8" aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+    </svg>,
+    <svg key="coffee" className="w-32 h-32 text-[#F5F5F5]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="0.8" aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M15 13.5H9m4.06-7.19l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" />
+    </svg>,
+    <svg key="art" className="w-32 h-32 text-[#D3544D]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="0.8" aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09l2.846.813-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
+    </svg>
+  ];
+
+  const positions = [
+    '-top-10 -right-6 rotate-[15deg]',
+    '-bottom-10 -left-4 rotate-[-20deg]',
+    '-top-8 -left-8 rotate-[-15deg]',
+    'top-1/2 -right-12 -translate-y-1/2 rotate-[25deg]'
+  ];
 
   return (
     <Link
       href={`/arsip/${item.slug}`}
       className={cn(
-        'group relative rounded-2xl overflow-hidden bg-[#100E0C] border border-white/5 hover:border-[#D4AF37]/30 transition-all duration-500 no-underline flex flex-col',
+        'group relative rounded-2xl overflow-hidden bg-[#100E0C] border border-white/5 hover:border-[#D4AF37]/30 transition-all duration-500 no-underline flex flex-col will-change-transform',
         visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
       )}
       style={{ transitionDelay: `${delay}ms` }}
@@ -59,23 +79,31 @@ function DocCard({ item, delay, visible }: { item: ReturnType<typeof getRecentAr
         {hasFoto ? (
           <img
             src={item.foto![0]}
-            alt=""
-            aria-hidden="true"
+            alt={item.judul}
             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
             loading="lazy"
           />
         ) : (
-          // Fallback kalau arsip ini belum ada fotonya — tetap tampil rapi, tidak kosong
           <div className="w-full h-full flex items-center justify-center">
             <span className="text-[10px] font-bold tracking-[0.15em] uppercase text-[#8A8A94]">Dokumentasi</span>
           </div>
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-[#0C0A08]/95 via-[#0C0A08]/10 to-transparent" />
-        <span className="absolute bottom-3 left-4 text-[10px] font-bold tracking-[0.1em] uppercase text-[#D4AF37]">
+        
+        <div 
+          className={cn(
+            "absolute z-10 opacity-20 transition-all duration-700 group-hover:scale-110 group-hover:opacity-40 pointer-events-none",
+            positions[index % 4]
+          )}
+        >
+          {icons[index % 4]}
+        </div>
+
+        <span className="absolute bottom-3 left-4 text-[10px] font-bold tracking-[0.1em] uppercase text-[#D4AF37] z-20">
           {item.tanggal}
         </span>
       </div>
-      <div className="p-5">
+      <div className="p-5 relative z-20">
         <h3 className="text-base font-bold font-serif text-[#F5F5F5] mb-1.5 group-hover:text-white transition-colors leading-snug">
           {item.judul}
         </h3>
@@ -91,6 +119,10 @@ export default function HomePage() {
   const [activeSlide, setActiveSlide] = useState(0);
   const [mounted, setMounted] = useState(false);
   const [activeTestimonial, setActiveTestimonial] = useState(0);
+  
+  // State baru untuk menunda pembuatan Canvas agar tidak menghalangi First Paint & LCP
+  const [isCanvasLoaded, setIsCanvasLoaded] = useState(false);
+
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const isMountedRef = useRef(false);
 
@@ -103,9 +135,8 @@ export default function HomePage() {
 
   const nearest = getNearestEvent();
   const latestArchive = getLatestArchive();
-  const recentDocs = getRecentArchives(3);
+  const recentDocs = getRecentArchives(4);
 
-  /* ─── Timer Logic ─────────────────────────────────────────────────────── */
   const clearTimer = useCallback(() => {
     if (timerRef.current) {
       clearInterval(timerRef.current);
@@ -123,16 +154,26 @@ export default function HomePage() {
 
   useEffect(() => {
     isMountedRef.current = true;
-    const t = setTimeout(() => setMounted(true), 100);
+    
+    // Set mounted dengan cepat agar layout stabil
+    setMounted(true);
     startTimer();
+
+    // Menunda eksekusi canvas interaktif hingga browser dalam keadaan senggang (idle)
+    if (typeof window !== 'undefined') {
+      if ('requestIdleCallback' in window) {
+        window.requestIdleCallback(() => setIsCanvasLoaded(true), { timeout: 1500 });
+      } else {
+        const t = setTimeout(() => setIsCanvasLoaded(true), 1200);
+        return () => clearTimeout(t);
+      }
+    }
 
     return () => {
       isMountedRef.current = false;
-      clearTimeout(t);
       clearTimer();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [clearTimer, startTimer]);
 
   const goToSlide = (idx: number) => {
     clearTimer();
@@ -142,18 +183,19 @@ export default function HomePage() {
 
   return (
     <main aria-label="Halaman Beranda" className="overflow-x-hidden">
+      
       {/* ─── HERO SECTION — HUMAN SPOTLIGHT ──────────────────────────────── */}
       <section className="relative min-h-[calc(100vh-70px)] flex flex-col justify-center items-center px-5 pt-24 pb-10 sm:px-6 sm:pt-28 sm:pb-12 overflow-hidden">
-        {/* Background Image */}
         <div className="absolute inset-0 z-0">
+          {/* OPTIMASI LCP: Menambahkan fetchPriority="high" & menghapus lazy load agar LCP turun drastis */}
           <img
             src="/hero-bg.jpeg"
-            alt=""
-            aria-hidden="true"
+            alt="Latar belakang komunitas Benang Merah"
             className="w-full h-full object-cover"
             loading="eager"
+            // @ts-ignore
+            fetchpriority="high"
           />
-          {/* Radial vignette — foto TERLIHAT di tengah, gelap hanya di pinggir */}
           <div
             className="absolute inset-0"
             style={{
@@ -171,30 +213,26 @@ export default function HomePage() {
                   rgba(12,10,8,0.3) 100%
                 )
               `,
-              backdropFilter: 'blur(0px)',
             }}
           />
         </div>
 
-        {/* Interactive Canvas — dipertahankan */}
-        <InteractiveWeaveCanvas />
+        {/* Hanya muat canvas interaktif saat browser senggang (idle) untuk menghemat TBT & Speed Index */}
+        {isCanvasLoaded && <InteractiveWeaveCanvas />}
 
-        {/* Warm Glow Effect */}
         <div
           aria-hidden="true"
           className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(900px,120vw)] h-[300px] sm:h-[460px] rounded-full pointer-events-none z-0"
           style={{ background: 'radial-gradient(ellipse, rgba(212,175,55,0.06) 0%, rgba(192,57,43,0.04) 40%, transparent 70%)', filter: 'blur(64px)' }}
         />
 
-        {/* Hero Content */}
         <div className="relative z-10 max-w-4xl w-full text-center">
-          {/* Badges */}
           <div
             className={cn(
               'flex flex-wrap items-center justify-center gap-2 mb-5 sm:mb-6 transition-all duration-800 ease-out-expo',
               mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2.5'
             )}
-            style={{ transitionDelay: '200ms' }}
+            style={{ transitionDelay: '50ms' }}
           >
             {nearest && (
               <Link
@@ -214,7 +252,7 @@ export default function HomePage() {
             )}
           </div>
 
-          {/* Slides Container */}
+          {/* OPTIMASI LAYOUT SHIFT (CLS): Memberikan tinggi minimum statis agar tidak terjadi pergeseran layout */}
           <div className="relative min-h-[280px] sm:min-h-[300px] md:min-h-[320px] mb-6 sm:mb-8">
             {SLIDES.map((slide, idx) => {
               const isCurrent = idx === activeSlide;
@@ -223,7 +261,7 @@ export default function HomePage() {
                   key={idx}
                   aria-hidden={!isCurrent}
                   className={cn(
-                    'transition-all duration-1200 ease-out-expo',
+                    'transition-all duration-1000 ease-out-expo will-change-[transform,opacity]',
                     isCurrent
                       ? 'relative opacity-100 translate-y-0 scale-100'
                       : 'absolute inset-0 opacity-0 translate-y-6 scale-95 pointer-events-none'
@@ -242,34 +280,35 @@ export default function HomePage() {
                   <p className="text-[0.8rem] sm:text-[0.9rem] md:text-[1.05rem] text-[#C4C4CE] max-w-xl mx-auto mt-4 sm:mt-5 leading-relaxed">
                     {slide.desc}
                   </p>
-                  <div className="mt-7 sm:mt-9 flex justify-center gap-3.5">
-                    <Link
-                      href={`/${slide.ctaPage === 'home' ? '' : slide.ctaPage}`}
-                      className="bmc-shine inline-block text-[10px] sm:text-[11px] font-bold tracking-[0.12em] uppercase px-7 py-3.5 sm:px-9 sm:py-4 rounded-full text-white no-underline bg-[#C0392B] hover:bg-[#A93226] shadow-[0_0_30px_rgba(192,57,43,0.35)] hover:shadow-[0_0_40px_rgba(192,57,43,0.5)] transition-all duration-300 animate-warm-pulse"
-                    >
-                      {slide.ctaLabel}
-                    </Link>
-                  </div>
+                  {slide.ctaLabel && (
+                    <div className="mt-7 sm:mt-9 flex justify-center gap-3.5">
+                      <Link
+                        href={`/${slide.ctaPage === 'home' ? '' : slide.ctaPage}`}
+                        className="bmc-shine inline-block text-[10px] sm:text-[11px] font-bold tracking-[0.12em] uppercase px-7 py-3.5 sm:px-9 sm:py-4 rounded-full text-white no-underline bg-[#C0392B] hover:bg-[#A93226] shadow-[0_0_30px_rgba(192,57,43,0.35)] hover:shadow-[0_0_40px_rgba(192,57,43,0.5)] transition-all duration-300 animate-warm-pulse"
+                      >
+                        {slide.ctaLabel}
+                      </Link>
+                    </div>
+                  )}
                 </div>
               );
             })}
           </div>
 
-          {/* Navigation Dots */}
           <div
             className={cn(
               'flex justify-center items-center gap-3 transition-opacity duration-600',
               mounted ? 'opacity-100' : 'opacity-0'
             )}
-            style={{ transitionDelay: '400ms' }}
+            style={{ transitionDelay: '250ms' }}
           >
             {SLIDES.map((_, idx) => (
               <button
                 key={idx}
                 onClick={() => goToSlide(idx)}
-                aria-label={`Pindah ke slide ${idx + 1}`}
+                aria-label={`Pindah ke slide halaman ${idx + 1}`}
                 className={cn(
-                  'h-1 rounded-full border-none cursor-pointer p-0 transition-all duration-450 ease-out-expo',
+                  'h-1 rounded-full border-none cursor-pointer p-0 transition-all duration-300 ease-out-expo',
                   idx === activeSlide
                     ? 'w-8 bg-[#C0392B] shadow-[0_0_10px_rgba(192,57,43,0.5)]'
                     : 'w-2 bg-white/10 hover:bg-white/20'
@@ -279,7 +318,6 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Scroll Indicator */}
         <div className="absolute bottom-5 sm:bottom-6 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-2 opacity-50">
           <span className="text-[8px] sm:text-[9px] font-semibold tracking-[0.15em] uppercase text-white/70">Gulir Kebawah</span>
           <div className="w-px h-6 sm:h-7 bg-gradient-to-b from-[#C0392B] to-transparent" />
@@ -293,14 +331,14 @@ export default function HomePage() {
           className="grid grid-cols-2 md:grid-cols-4 rounded-2xl border border-white/10 bg-[#100E0C]/95 backdrop-blur-xl shadow-[0_20px_50px_rgba(0,0,0,0.8)] overflow-hidden"
         >
           {STATS.map((s, i) => (
-            <StatItem key={i} value={s.value} label={s.label} delay={i * 100} start={statsVisible} />
+            <StatItem key={i} value={s.value} label={s.label} delay={i * 50} start={statsVisible} />
           ))}
         </div>
       </div>
 
-      {/* ─── INTRO / SIAPA KAMI — DIPANGKAS, FOKUS KE FOTO ────────────────── */}
-      <section ref={introRef} className="relative z-10 px-5 py-16 sm:px-6 sm:py-20 md:py-24 max-w-[1100px] mx-auto">
-        {/* Warm ambient glow */}
+
+      {/* ─── INTRO / SIAPA KAMI ────────────────── */}
+      <section ref={introRef} className="relative z-10 px-5 py-10 sm:px-6 sm:py-12 md:py-16 max-w-[1100px] mx-auto">
         <div
           aria-hidden="true"
           className="absolute top-0 left-1/4 w-[600px] h-[400px] pointer-events-none"
@@ -308,7 +346,6 @@ export default function HomePage() {
         />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-12 items-center">
-          {/* Left Column — teks dipangkas jadi satu paragraf singkat, sisanya sudah lengkap di /tentang */}
           <div>
             <SectionLabel>Siapa Kami?</SectionLabel>
             <h2
@@ -346,7 +383,6 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Right Column — FOTO KOMUNITAS + QUOTE */}
           <div
             className={cn(
               'relative transition-all duration-800 ease-out-expo',
@@ -355,27 +391,25 @@ export default function HomePage() {
             style={{ transitionDelay: '200ms' }}
           >
             <div className="relative rounded-3xl overflow-hidden border border-white/10 h-full min-h-[380px] group">
-              {/* Foto kegiatan — diskusi atau pengukuhan */}
               <img
                 src="/diskusi.jpg"
                 alt="Anggota Benang Merah Community berdiskusi dengan hangat"
                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                loading="lazy"
               />
-              {/* Gradient overlay — gelap hanya di bawah untuk teks */}
               <div className="absolute inset-0 bg-gradient-to-t from-[#0C0A08]/90 via-[#0C0A08]/15 to-transparent" />
 
-              {/* Quote overlay di bottom */}
               <div className="absolute bottom-0 left-0 right-0 p-7 sm:p-9">
                 <p className="text-[#E8E6E0] text-base sm:text-lg italic font-serif leading-relaxed mb-3">
                   &ldquo;Persaudaraan sejati dimulai dari keberanian untuk berdialog, bukan dari keseragaman yang dipaksakan.&rdquo;
                 </p>
                 <div className="flex items-center gap-3">
-                  {/* Foto member tersenyum */}
                   <div className="w-10 h-10 rounded-full overflow-hidden border border-[#D4AF37]/30">
                     <img
                       src="/arthur.JPG"
-                      alt="Member tersenyum"
+                      alt="Arthur, Anggota Aktif"
                       className="w-full h-full object-cover"
+                      loading="lazy"
                     />
                   </div>
                   <div>
@@ -385,17 +419,19 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* Gold accent line */}
               <div className="absolute top-4 left-7 right-7 h-px bg-gradient-to-r from-transparent via-[#D4AF37]/20 to-transparent" />
             </div>
           </div>
         </div>
       </section>
 
-      {/* ─── DOKUMENTASI TERBARU — GALERI DARI ARSIP ──────────────────────── */}
-      <Divider />
-      <section ref={docsRef} className="relative z-10 px-5 py-16 sm:px-6 sm:py-20 md:py-24 bg-pattern-thread">
-        <div className="max-w-[1100px] mx-auto">
+
+      {/* ─── Jejak Kegiatan Terbaru ─── */}
+      <section ref={docsRef} className="relative z-10 px-5 py-10 sm:px-6 sm:py-12 md:py-16 overflow-hidden">
+        <div className="absolute inset-0 pointer-events-none opacity-25 bg-pattern-community mix-blend-screen" aria-hidden="true" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-[#C0392B]/5 rounded-full blur-[100px] pointer-events-none -z-10" />
+
+        <div className="max-w-[1100px] mx-auto relative z-10">
           <div
             className={cn(
               'flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-10 sm:mb-12 transition-all duration-800 ease-out-expo',
@@ -417,9 +453,9 @@ export default function HomePage() {
           </div>
 
           {recentDocs.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               {recentDocs.map((item, i) => (
-                <DocCard key={item.slug} item={item} delay={i * 120} visible={docsVisible} />
+                <DocCard key={item.slug} item={item} delay={i * 80} visible={docsVisible} index={i} />
               ))}
             </div>
           ) : (
@@ -428,9 +464,9 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ─── PROGRAM TEASER ───────────────────────────────────────────────── */}
+
       <Divider />
-      <section ref={progTeaserRef} className="relative z-10 px-5 py-16 sm:px-6 sm:py-20 md:py-24 bg-white/[0.01] bg-pattern-dialog">
+      <section ref={progTeaserRef} className="relative z-10 px-5 py-10 sm:px-6 sm:py-12 md:py-16 bg-white/[0.01]">
         <div className="max-w-[1100px] mx-auto">
           <div
             className={cn(
@@ -454,12 +490,11 @@ export default function HomePage() {
                 <article
                   key={p.code}
                   className={cn(
-                    'relative rounded-2xl p-7 sm:p-8 bg-[#100E0C] border border-white/5 hover:border-white/10 transition-all duration-500 group',
+                    'relative rounded-2xl p-7 sm:p-8 bg-[#100E0C] border border-white/5 hover:border-white/10 transition-all duration-500 group will-change-[transform,opacity]',
                     progTeaserVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
                   )}
-                  style={{ transitionDelay: `${i * 120}ms` }}
+                  style={{ transitionDelay: `${i * 100}ms` }}
                 >
-                  {/* Subtle warm accent di pojok */}
                   <div className="absolute top-0 right-0 w-32 h-32 rounded-bl-2xl opacity-[0.03] pointer-events-none"
                     style={{ background: `radial-gradient(circle at top right, ${c.tag}, transparent 70%)` }}
                   />
@@ -490,7 +525,7 @@ export default function HomePage() {
               'text-center mt-10 sm:mt-12 transition-all duration-800 ease-out-expo',
               progTeaserVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
             )}
-            style={{ transitionDelay: '300ms' }}
+            style={{ transitionDelay: '250ms' }}
           >
             <Link
               href="/program"
@@ -502,10 +537,9 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ─── TESTIMONIAL — WARM & PERSONAL ────────────────────────────────── */}
+
       <Divider />
-      <section ref={testimonialRef} className="relative z-10 px-5 py-16 sm:px-6 sm:py-20 md:py-24 bg-pattern-weave">
-        {/* Warm ambient glow di belakang */}
+      <section ref={testimonialRef} className="relative z-10 px-5 py-10 sm:px-6 sm:py-12 md:py-16">
         <div
           aria-hidden="true"
           className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[300px] rounded-full pointer-events-none"
@@ -527,7 +561,7 @@ export default function HomePage() {
 
           <div
             className={cn(
-              'relative min-h-[280px] sm:min-h-[260px] flex items-center justify-center transition-all duration-800 ease-out-expo',
+              'relative min-h-[280px] sm:min-h-[260px] flex items-center justify-center transition-all duration-800 ease-out-expo will-change-[transform,opacity]',
               testimonialVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
             )}
             style={{ transitionDelay: '120ms' }}
@@ -544,7 +578,6 @@ export default function HomePage() {
                       : 'absolute inset-0 opacity-0 scale-95 pointer-events-none'
                   )}
                 >
-                  {/* Quote dengan tanda kutip dekoratif */}
                   <div className="relative">
                     <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-5xl text-[#D4AF37]/15 font-serif select-none">
                       &ldquo;
@@ -554,7 +587,6 @@ export default function HomePage() {
                     </blockquote>
                   </div>
 
-                  {/* Author dengan avatar */}
                   <div className="flex items-center justify-center gap-3">
                     <div
                       className="w-12 h-12 rounded-full flex items-center justify-center font-bold text-sm shrink-0 border-2"
@@ -576,7 +608,6 @@ export default function HomePage() {
             })}
           </div>
 
-          {/* Dots Navigation */}
           <div
             className={cn(
               'flex justify-center gap-2.5 mt-8 transition-all duration-800 ease-out-expo',
@@ -588,7 +619,7 @@ export default function HomePage() {
               <button
                 key={i}
                 onClick={() => setActiveTestimonial(i)}
-                aria-label={`Testimoni ${i + 1}`}
+                aria-label={`Pindah ke testimoni ${i + 1}`}
                 className={cn(
                   'w-2.5 h-2.5 rounded-full border-none cursor-pointer p-0 transition-all duration-300',
                   i === activeTestimonial
@@ -601,13 +632,12 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ─── CTA AKHIR — WARM INVITATION ──────────────────────────────────── */}
+
       <Divider />
       <section
         ref={ctaRef}
-        className="relative z-10 px-5 py-16 sm:px-6 sm:py-20 md:py-24 text-center bg-gradient-to-b from-transparent via-[#C0392B]/[0.03] to-transparent"
+        className="relative z-10 px-5 py-10 sm:px-6 sm:py-12 md:py-16 text-center bg-gradient-to-b from-transparent via-[#C0392B]/[0.03] to-transparent"
       >
-        {/* Warm glow */}
         <div
           aria-hidden="true"
           className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[300px] rounded-full pointer-events-none"
@@ -628,7 +658,6 @@ export default function HomePage() {
             Kami selalu menyediakan tempat duduk dan kopi hangat bagi siapa pun yang ingin ngobrol dengan terbuka di Manado.
           </p>
 
-          {/* Tombol dengan warm pulse */}
           <Link
             href="/daftar"
             className="bmc-shine animate-warm-pulse inline-block text-[10px] sm:text-[11px] font-bold tracking-[0.12em] uppercase px-8 py-3.5 sm:px-11 sm:py-4 rounded-full text-white no-underline bg-[#C0392B] hover:bg-[#A93226] shadow-[0_0_30px_rgba(192,57,43,0.3)] hover:shadow-[0_0_40px_rgba(192,57,43,0.45)] transition-all duration-300"
@@ -636,7 +665,6 @@ export default function HomePage() {
             Isi Formulir Bergabung &rarr;
           </Link>
 
-          {/* Subtle invitation text */}
           <p className="text-[11px] text-[#A0A0AA] mt-5 italic">
             Atau cukup datang dan ngobrol — pintu kami selalu terbuka.
           </p>
